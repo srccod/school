@@ -1,9 +1,23 @@
+import {
+  Resizable,
+  ResizableHandle,
+  ResizablePanel,
+} from "~/components/ui/resizable";
+
 export default function Home() {
   return (
-    <main class="text-center mx-auto text-gray-700 p-4">
-      <h1 class="max-6-xs text-6xl text-sky-700 my-16">
-        source cod
-      </h1>
-    </main>
+    <Resizable class="flex-1 h-full">
+      <ResizablePanel initialSize={0.5} class="overflow-hidden">
+        <div class="flex h-[200px] items-center justify-center p-6">
+          <span class="font-semibold">One</span>
+        </div>
+      </ResizablePanel>
+      <ResizableHandle withHandle />
+      <ResizablePanel initialSize={0.5} class="overflow-hidden">
+        <div class="flex h-full items-center justify-center p-6">
+          <span class="font-semibold">Two</span>
+        </div>
+      </ResizablePanel>
+    </Resizable>
   );
 }

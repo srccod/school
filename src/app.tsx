@@ -9,10 +9,12 @@ export default function App() {
   return (
     <Router
       root={(props) => (
-        <>
+        <div class="min-h-screen flex flex-col">
           <Nav />
-          <Suspense>{props.children}</Suspense>
-        </>
+          <main class="flex-1 flex flex-col">
+            <Suspense>{props.children}</Suspense>
+          </main>
+        </div>
       )}
     >
       <FileRoutes />
