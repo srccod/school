@@ -1,6 +1,9 @@
 {
   "name": "srccod_playground",
+  "private": true,
+  "version": "0.0.1",
   "type": "module",
+  "license": "Apache-2.0",
   "scripts": {
     "dev": "vinxi dev",
     "build": "vinxi build",
