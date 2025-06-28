@@ -1,15 +1,33 @@
 import { createSignal } from "solid-js";
+import Editor from "~/components/Editor";
 import {
     Resizable,
     ResizableHandle,
     ResizablePanel,
 } from "~/components/ui/resizable";
-import Editor from "~/components/Editor";
+import { usePyodide } from "~/hooks/usePyodide";
 
 export default function Home() {
     const [code, setCode] = createSignal(
         `def say_hello(name):\n   print(f"Hello, {name}!")\n\nsay_hello("World")`,
     );
+    const {
+        isPyodideLoading,
+        isExecuting,
+        executePython,
+    } = usePyodide();
+
+    const handleRunCode = async () => {
+        if (isPyodideLoading() || isExecuting()) {
+            return;
+        }
+        try {
+            const result = await executePython(code());
+            console.log("Python execution result:", result);
+        } catch (err) {
+            console.error("Python execution failed:", err);
+        }
+    };
 
     return (
         <Resizable class="flex-1 h-full">
@@ -23,7 +41,17 @@ export default function Home() {
                     uri="main.py"
                     onChange={(value) => setCode(value)}
                     onMount={(editor, monaco) => {
-                        console.log("editor mounted");
+                        editor.addAction({
+                            id: "run-code",
+                            label: "Run Code",
+                            keybindings: [
+                                monaco.KeyMod.CtrlCmd | monaco.KeyCode.F9,
+                            ],
+                            run: () => {
+                                handleRunCode();
+                            },
+                        });
+                        console.log("code editor mounted");
                     }}
                     options={{
                         fontSize: 14,
@@ -44,7 +72,7 @@ export default function Home() {
                     uri="output"
                     onChange={() => {}}
                     onMount={(editor, monaco) => {
-                        console.log("editor mounted");
+                        console.log("output editor mounted");
                     }}
                     options={{
                         readOnly: true,
