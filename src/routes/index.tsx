@@ -1,23 +1,61 @@
+import { createSignal } from "solid-js";
 import {
-  Resizable,
-  ResizableHandle,
-  ResizablePanel,
+    Resizable,
+    ResizableHandle,
+    ResizablePanel,
 } from "~/components/ui/resizable";
+import Editor from "~/components/Editor";
 
 export default function Home() {
-  return (
-    <Resizable class="flex-1 h-full">
-      <ResizablePanel initialSize={0.5} class="overflow-hidden">
-        <div class="flex h-[200px] items-center justify-center p-6">
-          <span class="font-semibold">One</span>
-        </div>
-      </ResizablePanel>
-      <ResizableHandle withHandle />
-      <ResizablePanel initialSize={0.5} class="overflow-hidden">
-        <div class="flex h-full items-center justify-center p-6">
-          <span class="font-semibold">Two</span>
-        </div>
-      </ResizablePanel>
-    </Resizable>
-  );
+    const [code, setCode] = createSignal(
+        `def say_hello(name):\n   print(f"Hello, {name}!")\n\nsay_hello("World")`,
+    );
+
+    return (
+        <Resizable class="flex-1 h-full">
+            <ResizablePanel initialSize={0.5} class="overflow-hidden">
+                <Editor
+                    value={code()}
+                    language="python"
+                    theme="vs-dark"
+                    height="100%"
+                    width="100%"
+                    uri="main.py"
+                    onChange={(value) => setCode(value)}
+                    onMount={(editor, monaco) => {
+                        console.log("editor mounted");
+                    }}
+                    options={{
+                        fontSize: 14,
+                        minimap: { enabled: false },
+                        scrollBeyondLastLine: false,
+                        automaticLayout: true,
+                    }}
+                />
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel initialSize={0.5} class="overflow-hidden">
+                <Editor
+                    value={"Hello, World!"}
+                    language="python"
+                    theme="vs-dark"
+                    height="100%"
+                    width="100%"
+                    uri="output"
+                    onChange={() => {}}
+                    onMount={(editor, monaco) => {
+                        console.log("editor mounted");
+                    }}
+                    options={{
+                        readOnly: true,
+                        lineNumbers: "off",
+                        fontSize: 14,
+                        minimap: { enabled: false },
+                        scrollBeyondLastLine: false,
+                        automaticLayout: true,
+                    }}
+                />
+            </ResizablePanel>
+        </Resizable>
+    );
 }
