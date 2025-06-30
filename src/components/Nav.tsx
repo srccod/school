@@ -7,8 +7,8 @@ export default function Nav() {
       ? "border-sky-600"
       : "border-transparent hover:border-sky-600";
   return (
-    <nav class="bg-sky-800">
-      <ul class="flex items-center p-3 text-gray-200">
+    <nav>
+      <ul class="flex items-center p-3 light:text-foreground">
         <li class={`border-b-2 ${active("/")} mx-1.5 sm:mx-6`}>
           <a href="/">Home</a>
         </li>

@@ -65,7 +65,7 @@ export function usePyodide() {
           setPyodideError(error || "Unknown Python execution error.");
           const execErrorPromise = pendingPromises.get(id);
           if (execErrorPromise) {
-            execErrorPromise.reject({ output: output, error: error });
+            execErrorPromise.resolve({ output: output, returnValue: error });
             pendingPromises.delete(id);
           }
           break;

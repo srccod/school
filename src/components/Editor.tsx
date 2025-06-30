@@ -1,22 +1,31 @@
-import { createEffect, createSignal, onCleanup, onMount } from "solid-js";
+import {
+    createEffect,
+    createSignal,
+    mergeProps,
+    onCleanup,
+    onMount,
+} from "solid-js";
 import type * as Monaco from "monaco-editor";
 
 interface EditorProps {
-    value?: string;
-    language?: string;
-    theme?: string;
+    controlled?: boolean;
     height?: string;
-    width?: string;
-    options?: Monaco.editor.IStandaloneEditorConstructionOptions;
-    uri?: string;
+    language?: string;
     onChange?: (value: string) => void;
     onMount?: (
         editor: Monaco.editor.IStandaloneCodeEditor,
         monaco: typeof Monaco,
     ) => void;
+    options?: Monaco.editor.IStandaloneEditorConstructionOptions;
+    theme?: string;
+    uri?: string;
+    value?: string;
+    width?: string;
 }
 
-export default function Editor(props: EditorProps) {
+export default function Editor(rawProps: EditorProps) {
+    const props = mergeProps({ controlled: false }, rawProps);
+
     const [containerRef, setContainerRef] = createSignal<HTMLDivElement>();
     const [editor, setEditor] = createSignal<
         Monaco.editor.IStandaloneCodeEditor
@@ -103,7 +112,22 @@ export default function Editor(props: EditorProps) {
         }
     });
 
-    // Update editor theme when props change
+    createEffect(() => {
+        const shouldSync = props.controlled;
+
+        if (shouldSync) {
+            const editorInstance = editor();
+            const currentValue = props.value;
+
+            if (editorInstance && currentValue !== undefined) {
+                const model = editorInstance.getModel();
+                if (model && model.getValue() !== currentValue) {
+                    model.setValue(currentValue);
+                }
+            }
+        }
+    });
+
     createEffect(() => {
         const monacoModule = monaco();
         if (monacoModule && props.theme) {
@@ -128,12 +152,15 @@ export default function Editor(props: EditorProps) {
     });
 
     return (
-        <div
-            ref={setContainerRef}
-            style={{
-                width: props.width || "100%",
-                height: props.height || "400px",
-            }}
-        />
+        <div class="flex flex-col h-full">
+            <div
+                ref={setContainerRef}
+                class="flex-1 overflow-hidden"
+                style={{
+                    width: props.width || "100%",
+                    height: props.height || "400px",
+                }}
+            />
+        </div>
     );
 }
