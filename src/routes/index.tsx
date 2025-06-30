@@ -51,8 +51,6 @@ export default function Home() {
                         value={code()}
                         language="python"
                         theme="vs-dark"
-                        height="100%"
-                        width="100%"
                         uri="main.py"
                         onChange={(value) => setCode(value)}
                         onMount={(editor, monaco) => {
@@ -85,8 +83,6 @@ export default function Home() {
                     value={output()}
                     language="python"
                     theme="vs-dark"
-                    height="100%"
-                    width="100%"
                     uri="output"
                     onMount={(editor, monaco) => {
                         console.log("output editor mounted");

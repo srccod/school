@@ -9,7 +9,6 @@ import type * as Monaco from "monaco-editor";
 
 interface EditorProps {
     controlled?: boolean;
-    height?: string;
     language?: string;
     onChange?: (value: string) => void;
     onMount?: (
@@ -20,7 +19,6 @@ interface EditorProps {
     theme?: string;
     uri?: string;
     value?: string;
-    width?: string;
 }
 
 export default function Editor(rawProps: EditorProps) {
@@ -156,10 +154,6 @@ export default function Editor(rawProps: EditorProps) {
             <div
                 ref={setContainerRef}
                 class="flex-1 overflow-hidden"
-                style={{
-                    width: props.width || "100%",
-                    height: props.height || "400px",
-                }}
             />
         </div>
     );
