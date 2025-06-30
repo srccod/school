@@ -7,7 +7,7 @@ export default function Nav() {
       ? "border-sky-600"
       : "border-transparent hover:border-sky-600";
   return (
-    <div class="flex justify-between items-center mr-3 ml-3">
+    <div class="flex justify-between items-center p-3">
       <nav>
         <ul class="flex items-center p-3 light:text-foreground">
           <li class={`border-b-2 ${active("/")} mx-1.5 sm:mx-6`}>
@@ -18,7 +18,7 @@ export default function Nav() {
           </li>
         </ul>
       </nav>
-      <div>
+      <div class="flex flex-col items-center gap-1">
         <span class="text-2xl font-bold">source cod</span>
       </div>
       <div>
