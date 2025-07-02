@@ -9,9 +9,9 @@ export default function App() {
   return (
     <Router
       root={(props) => (
-        <div class="min-h-screen flex flex-col">
+        <div class="h-screen grid grid-rows-[auto_1fr]">
           <Nav />
-          <main class="flex-1 flex flex-col">
+          <main class="h-full">
             <Suspense>{props.children}</Suspense>
           </main>
         </div>

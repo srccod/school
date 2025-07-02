@@ -44,58 +44,80 @@ export default function Home() {
     };
 
     return (
-        <Resizable class="flex-1 h-full">
-            <ResizablePanel initialSize={0.5} class="overflow-hidden">
-                <div class="flex flex-col overflow-hidden h-full">
-                    <Editor
-                        value={code()}
-                        language="python"
-                        theme="vs-dark"
-                        uri="main.py"
-                        onChange={(value) => setCode(value)}
-                        onMount={(editor, monaco) => {
-                            editor.addAction({
-                                id: "run-code",
-                                label: "Run Code",
-                                keybindings: [
-                                    monaco.KeyMod.CtrlCmd | monaco.KeyCode.F9,
-                                ],
-                                run: () => {
-                                    handleRunCode();
-                                },
-                            });
-                            console.log("code editor mounted");
-                        }}
-                        options={{
-                            fontSize: 14,
-                            minimap: { enabled: false },
-                            scrollBeyondLastLine: false,
-                            automaticLayout: true,
-                        }}
-                    />
-                    <CommandBar onRun={handleRunCode} />
+        <Resizable class="">
+            <ResizablePanel
+                initialSize={0.35}
+                class="overflow-hidden"
+            >
+                <div class="flex h-full p-6">
+                    <span class="font-semibold">Lesson Text</span>
                 </div>
             </ResizablePanel>
-            <ResizableHandle withHandle />
-            <ResizablePanel initialSize={0.5} class="overflow-hidden">
-                <Editor
-                    controlled
-                    value={output()}
-                    language="python"
-                    theme="vs-dark"
-                    uri="output"
-                    onMount={(editor, monaco) => {
-                        console.log("output editor mounted");
-                    }}
-                    options={{
-                        readOnly: true,
-                        lineNumbers: "off",
-                        fontSize: 14,
-                        minimap: { enabled: false },
-                        scrollBeyondLastLine: false,
-                        automaticLayout: true,
-                    }}
-                />
+            <ResizableHandle />
+            <ResizablePanel initialSize={0.65} class="overflow-hidden">
+                <Resizable orientation="vertical">
+                    <ResizablePanel
+                        initialSize={0.5}
+                        class="border-b-1 overflow-hidden"
+                    >
+                        <div class="h-full flex flex-col">
+                            <CommandBar onRun={handleRunCode} />
+                            <Editor
+                                value={code()}
+                                language="python"
+                                theme="vs-dark"
+                                uri="main.py"
+                                onChange={(value) => setCode(value)}
+                                onMount={(editor, monaco) => {
+                                    editor.addAction({
+                                        id: "run-code",
+                                        label: "Run Code",
+                                        keybindings: [
+                                            monaco.KeyMod.CtrlCmd |
+                                            monaco.KeyCode.F9,
+                                        ],
+                                        run: () => {
+                                            handleRunCode();
+                                        },
+                                    });
+                                    console.log("code editor mounted");
+                                }}
+                                options={{
+                                    fontSize: 14,
+                                    minimap: { enabled: false },
+                                    scrollBeyondLastLine: false,
+                                    automaticLayout: true,
+                                }}
+                            />
+                        </div>
+                    </ResizablePanel>
+                    <ResizableHandle />
+                    <ResizablePanel
+                        initialSize={0.5}
+                        class="overflow-hidden"
+                    >
+                        <div class="h-full flex flex-col">
+                            <Editor
+                                controlled
+                                value={output()}
+                                language="python"
+                                theme="vs-dark"
+                                uri="output"
+                                onMount={(editor, monaco) => {
+                                    console.log("output editor mounted");
+                                }}
+                                options={{
+                                    readOnly: true,
+                                    lineNumbers: "off",
+                                    fontSize: 14,
+                                    minimap: { enabled: false },
+                                    scrollBeyondLastLine: false,
+                                    automaticLayout: true,
+                                }}
+                            />
+                        </div>
+                    </ResizablePanel>
+                </Resizable>
             </ResizablePanel>
         </Resizable>
     );

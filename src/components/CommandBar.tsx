@@ -6,8 +6,8 @@ type CommandBarProps = {
 
 export default function CommandBar(props: CommandBarProps) {
     return (
-        <div class="flex place-content-end gap-2">
-            <ul class="m-5">
+        <div class="flex place-content-start gap-2 m-3">
+            <ul>
                 <li>
                     <button onclick={props.onRun}>
                         <RunIcon class="" />

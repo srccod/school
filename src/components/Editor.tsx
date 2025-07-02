@@ -86,7 +86,6 @@ export default function Editor(rawProps: EditorProps) {
             const editorInstance = monacoModule.editor.create(container, {
                 model,
                 theme: props.theme || "vs-dark",
-                automaticLayout: true,
                 scrollbar: {
                     verticalScrollbarSize: 5,
                     verticalSliderSize: 5,
@@ -150,11 +149,9 @@ export default function Editor(rawProps: EditorProps) {
     });
 
     return (
-        <div class="flex flex-col h-full">
-            <div
-                ref={setContainerRef}
-                class="flex-1 overflow-hidden"
-            />
-        </div>
+        <div
+            ref={setContainerRef}
+            class="flex-1 overflow-hidden m-2"
+        />
     );
 }
