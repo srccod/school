@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "lib": ["esnext", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
     "jsxImportSource": "solid-js"
   }
