@@ -1,7 +1,8 @@
+// deno-lint-ignore-file no-case-declarations
 import { createSignal, onCleanup, onMount } from "solid-js";
-import { generateID } from "~/lib/generateID";
+import { generateID } from "../lib/generateID.ts";
 
-import PyodideWorker from "../workers/pyodide.worker?worker";
+import PyodideWorker from "../workers/pyodide.worker.ts?worker";
 
 type WorkerMessage = {
   id: string;
@@ -27,6 +28,11 @@ export function usePyodide() {
 
   onMount(() => {
     worker = new PyodideWorker();
+
+    if (!worker || !(worker instanceof Worker)) {
+      console.error("Failed to create Pyodide worker.");
+      return;
+    }
 
     worker.onmessage = (event: MessageEvent<WorkerMessage>) => {
       const { id, type, output, error, returnValue } = event.data;

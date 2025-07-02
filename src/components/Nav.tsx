@@ -1,7 +1,7 @@
-import { useLocation } from "@solidjs/router";
+// import { useLocation } from "@solidjs/router";
 
 export default function Nav() {
-  const location = useLocation();
+  const location = { pathname: "/" };
   const active = (path: string) =>
     path == location.pathname
       ? "border-sky-600"
