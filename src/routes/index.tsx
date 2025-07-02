@@ -58,9 +58,9 @@ export default function Home() {
                 <Resizable orientation="vertical">
                     <ResizablePanel
                         initialSize={0.5}
-                        class="border-b-1 overflow-hidden"
+                        class="overflow-hidden"
                     >
-                        <div class="h-full flex flex-col">
+                        <div class="h-full flex flex-col transition-all duration-75">
                             <CommandBar onRun={handleRunCode} />
                             <Editor
                                 value={code()}
@@ -86,7 +86,6 @@ export default function Home() {
                                     fontSize: 14,
                                     minimap: { enabled: false },
                                     scrollBeyondLastLine: false,
-                                    automaticLayout: true,
                                 }}
                             />
                         </div>
@@ -96,7 +95,7 @@ export default function Home() {
                         initialSize={0.5}
                         class="overflow-hidden"
                     >
-                        <div class="h-full flex flex-col">
+                        <div class="h-full flex flex-col transition-all duration-75">
                             <Editor
                                 controlled
                                 value={output()}
@@ -112,7 +111,6 @@ export default function Home() {
                                     fontSize: 14,
                                     minimap: { enabled: false },
                                     scrollBeyondLastLine: false,
-                                    automaticLayout: true,
                                 }}
                             />
                         </div>
