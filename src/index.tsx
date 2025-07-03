@@ -1,6 +1,7 @@
 /* @refresh reload */
 import "./index.css";
 import { render } from "solid-js/web";
+import { Route, Router } from "@solidjs/router";
 
 import App from "./App.tsx";
 
@@ -12,4 +13,8 @@ if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
   );
 }
 
-render(() => <App />, root!);
+render(() => (
+  <Router>
+    <Route path="/" component={App}></Route>
+  </Router>
+), root!);

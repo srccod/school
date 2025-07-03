@@ -3,5 +3,8 @@
     "lib": ["esnext", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
     "jsxImportSource": "solid-js"
+  },
+  "imports": {
+    "@solidjs/router": "npm:@solidjs/router"
   }
 }

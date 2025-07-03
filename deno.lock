@@ -4,6 +4,7 @@
     "npm:@corvu/resizable@~0.2.5": "0.2.5_solid-js@1.9.7__seroval@1.3.2",
     "npm:@fontsource/fira-code@^5.2.6": "5.2.6",
     "npm:@kobalte/core@~0.13.10": "0.13.10_solid-js@1.9.7__seroval@1.3.2",
+    "npm:@solidjs/router@*": "0.15.3_solid-js@1.9.7__seroval@1.3.2",
     "npm:@tailwindcss/vite@^4.0.7": "4.1.10_vite@7.0.0__picomatch@4.0.2",
     "npm:clsx@^2.1.1": "2.1.1",
     "npm:monaco-editor@~0.52.2": "0.52.2",
@@ -588,6 +589,12 @@
     },
     "@solid-primitives/utils@6.3.2_solid-js@1.9.7__seroval@1.3.2": {
       "integrity": "sha512-hZ/M/qr25QOCcwDPOHtGjxTD8w2mNyVAYvcfgwzBHq2RwNqHNdDNsMZYap20+ruRwW4A3Cdkczyoz0TSxLCAPQ==",
+      "dependencies": [
+        "solid-js"
+      ]
+    },
+    "@solidjs/router@0.15.3_solid-js@1.9.7__seroval@1.3.2": {
+      "integrity": "sha512-iEbW8UKok2Oio7o6Y4VTzLj+KFCmQPGEpm1fS3xixwFBdclFVBvaQVeibl1jys4cujfAK5Kn6+uG2uBm3lxOMw==",
       "dependencies": [
         "solid-js"
       ]
@@ -1206,6 +1213,9 @@
     }
   },
   "workspace": {
+    "dependencies": [
+      "npm:@solidjs/router@*"
+    ],
     "packageJson": {
       "dependencies": [
         "npm:@corvu/resizable@~0.2.5",
