@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: postgres:17.5-alpine3.22
+    container_name: srccod-postgres
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - srccod_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-cod} -d ${POSTGRES_DB:-srccod}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  srccod_data:
+    driver: local

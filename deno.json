@@ -1,10 +1,73 @@
 {
   "compilerOptions": {
-    "lib": ["esnext", "DOM", "DOM.Iterable"],
+    "lib": ["esnext", "DOM", "DOM.Iterable", "deno.ns"],
     "jsx": "react-jsx",
     "jsxImportSource": "solid-js"
   },
   "imports": {
-    "@solidjs/router": "npm:@solidjs/router"
+    "@solidjs/router": "npm:@solidjs/router",
+    "@std/fs": "jsr:@std/fs@^1.0.19",
+    "@std/path": "jsr:@std/path@^1.1.1",
+    "@corvu/resizable": "npm:@corvu/resizable@^0.2.5",
+    "@fontsource/fira-code": "npm:@fontsource/fira-code@^5.2.6",
+    "@kobalte/core": "npm:@kobalte/core@^0.13.10",
+    "@modular-forms/solid": "npm:@modular-forms/solid@^0.25.1",
+    "@tailwindcss/vite": "npm:@tailwindcss/vite@^4.0.7",
+    "@types/pg": "npm:@types/pg@^8.15.4",
+    "better-auth": "npm:better-auth@^1.2.12",
+    "class-variance-authority": "npm:class-variance-authority@^0.7.1",
+    "clsx": "npm:clsx@^2.1.1",
+    "drizzle-kit": "npm:drizzle-kit@^0.31.4",
+    "drizzle-orm": "npm:drizzle-orm@^0.44.3",
+    "hono": "npm:hono@^4.8.4",
+    "kysely": "npm:kysely@^0.28.2",
+    "monaco-editor": "npm:monaco-editor@^0.52.2",
+    "pg": "npm:pg@^8.16.3",
+    "pg-pool": "npm:pg-pool@^3.10.1",
+    "pyodide": "npm:pyodide@^0.27.7",
+    "solid-js": "npm:solid-js@^1.9.5",
+    "tailwind-merge": "npm:tailwind-merge@^3.3.1",
+    "tailwindcss": "npm:tailwindcss@^4.0.7",
+    "tailwindcss-animate": "npm:tailwindcss-animate@^1.0.7",
+    "typescript": "npm:typescript@^5.7.2",
+    "vite": "npm:vite@^7.0.0",
+    "vite-plugin-solid": "npm:vite-plugin-solid@^2.11.6"
+  },
+  "include": ["web/**/*", "server/**/*", "deno.json", "tailwind.config.ts"],
+  "exclude": ["node_modules", "dist"],
+  "nodeModulesDir": "auto",
+
+  "tasks": {
+    "auth:generate": {
+      "command": "deno run --allow-env --allow-read --allow-write --allow-net npm:@better-auth/cli@latest generate"
+    },
+    "auth:migrate": {
+      "command": "deno run --allow-env --allow-read --allow-write --allow-net npm:@better-auth/cli@latest migrate"
+    },
+    "api": {
+      "command": "deno run --allow-env --allow-net --allow-read --watch --env-file ./server/src/server.ts"
+    },
+    "build": {
+      "command": "vite build"
+    },
+    "dev": {
+      "command": "vite"
+    },
+    "serve:web": {
+      "command": "vite preview",
+      "dependencies": ["build"]
+    },
+    "db:up": {
+      "command": "docker compose -f docker-compose.database.yml up"
+    },
+    "db:down": {
+      "command": "docker compose -f docker-compose.database.yml down"
+    },
+    "db:restart": {
+      "command": "docker compose -f docker-compose.database.yml --env-file restart"
+    },
+    "db:logs": {
+      "command": "docker compose -f docker-compose.database.yml --env-file logs -f postgres"
+    }
   }
 }

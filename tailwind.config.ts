@@ -1,9 +1,10 @@
 import defaultTheme from "tailwindcss/defaultTheme";
+import tailwindcssAnimate from "tailwindcss-animate";
 
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: ["variant", [".dark &", '[data-kb-theme="dark"] &']],
-  content: ["./src/**/*.{ts,tsx}"],
+  content: ["./web/src/**/*.{ts,tsx}"],
   prefix: "",
   theme: {
     container: {
@@ -105,5 +106,5 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [tailwindcssAnimate],
 };

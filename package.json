@@ -5,14 +5,11 @@
   "description": "",
   "type": "module",
   "license": "Apache-2.0",
-  "scripts": {
-    "start": "vite",
-    "dev": "vite",
-    "build": "vite build",
-    "serve": "vite preview"
-  },
+  "scripts": {},
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.7",
+    "@types/pg": "^8.15.4",
+    "drizzle-kit": "^0.31.4",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
     "tailwindcss": "^4.0.7",
@@ -24,9 +21,17 @@
     "@corvu/resizable": "^0.2.5",
     "@fontsource/fira-code": "^5.2.6",
     "@kobalte/core": "^0.13.10",
+    "@modular-forms/solid": "^0.25.1",
+    "better-auth": "^1.2.12",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "drizzle-orm": "^0.44.3",
+    "hono": "^4.8.4",
+    "kysely": "^0.28.2",
     "monaco-editor": "^0.52.2",
+    "pg": "^8.16.3",
+    "pg-pool": "^3.10.1",
+    "postgres": "^3.4.5",
     "pyodide": "^0.27.7",
     "solid-js": "^1.9.5"
   }

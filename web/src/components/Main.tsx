@@ -96,7 +96,7 @@ export default function Home() {
                 language="python"
                 theme="vs-dark"
                 uri="output"
-                onMount={(editor, monaco) => {
+                onMount={(_editor, _monaco) => {
                   console.log("output editor mounted");
                 }}
                 options={{
