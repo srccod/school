@@ -54,34 +54,36 @@ export default function Home() {
             initialSize={0.5}
             class="overflow-hidden"
           >
-            <div class="h-full flex flex-col transition-all duration-75">
+            <div class="h-full flex flex-col">
               <CommandBar onRun={handleRunCode} />
-              <Editor
-                value={code()}
-                language="python"
-                theme="vs-dark"
-                uri="main.py"
-                onChange={(value) => setCode(value)}
-                onMount={(editor, monaco) => {
-                  editor.addAction({
-                    id: "run-code",
-                    label: "Run Code",
-                    keybindings: [
-                      monaco.KeyMod.CtrlCmd |
-                      monaco.KeyCode.F9,
-                    ],
-                    run: () => {
-                      handleRunCode();
-                    },
-                  });
-                  console.log("code editor mounted");
-                }}
-                options={{
-                  fontSize: 14,
-                  minimap: { enabled: false },
-                  scrollBeyondLastLine: false,
-                }}
-              />
+              <div class="flex-1 overflow-hidden">
+                <Editor
+                  value={code()}
+                  language="python"
+                  theme="vs-dark"
+                  uri="main.py"
+                  onChange={(value) => setCode(value)}
+                  onMount={(editor, monaco) => {
+                    editor.addAction({
+                      id: "run-code",
+                      label: "Run Code",
+                      keybindings: [
+                        monaco.KeyMod.CtrlCmd |
+                        monaco.KeyCode.F9,
+                      ],
+                      run: () => {
+                        handleRunCode();
+                      },
+                    });
+                    console.log("code editor mounted");
+                  }}
+                  options={{
+                    fontSize: 14,
+                    minimap: { enabled: false },
+                    scrollBeyondLastLine: false,
+                  }}
+                />
+              </div>
             </div>
           </ResizablePanel>
           <ResizableHandle />
@@ -89,24 +91,26 @@ export default function Home() {
             initialSize={0.5}
             class="overflow-hidden"
           >
-            <div class="h-full flex flex-col transition-all duration-75">
-              <Editor
-                controlled
-                value={output()}
-                language="python"
-                theme="vs-dark"
-                uri="output"
-                onMount={(_editor, _monaco) => {
-                  console.log("output editor mounted");
-                }}
-                options={{
-                  readOnly: true,
-                  lineNumbers: "off",
-                  fontSize: 14,
-                  minimap: { enabled: false },
-                  scrollBeyondLastLine: false,
-                }}
-              />
+            <div class="h-full flex flex-col">
+              <div class="flex-1 overflow-hidden">
+                <Editor
+                  controlled
+                  value={output()}
+                  language="python"
+                  theme="vs-dark"
+                  uri="output"
+                  onMount={(_editor, _monaco) => {
+                    console.log("output editor mounted");
+                  }}
+                  options={{
+                    readOnly: true,
+                    lineNumbers: "off",
+                    fontSize: 14,
+                    minimap: { enabled: false },
+                    scrollBeyondLastLine: false,
+                  }}
+                />
+              </div>
             </div>
           </ResizablePanel>
         </Resizable>

@@ -60,6 +60,7 @@ export default function Editor(rawProps: EditorProps) {
           verticalScrollbarSize: 5,
           verticalSliderSize: 5,
         },
+        automaticLayout: true,
         ...props.options,
       });
 
@@ -72,6 +73,15 @@ export default function Editor(rawProps: EditorProps) {
           props.onChange?.(editorInstance.getValue());
         });
       }
+
+      const resizeObserver = new ResizeObserver(() => {
+        editorInstance.layout();
+      });
+      resizeObserver.observe(container);
+
+      // Store the observer for cleanup
+      (container as HTMLDivElement & { __resizeObserver?: ResizeObserver })
+        .__resizeObserver = resizeObserver;
 
       props.onMount?.(editorInstance, monaco);
     } catch (error) {
@@ -114,6 +124,18 @@ export default function Editor(rawProps: EditorProps) {
         model.dispose();
       });
     }
+
+    // Clean up ResizeObserver
+    const container = containerRef();
+    if (container) {
+      const resizeObserver =
+        (container as HTMLDivElement & { __resizeObserver?: ResizeObserver })
+          .__resizeObserver;
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+    }
+
     setEditor(undefined);
     setModels(undefined);
   });
@@ -121,7 +143,7 @@ export default function Editor(rawProps: EditorProps) {
   return (
     <div
       ref={setContainerRef}
-      class="flex-1 overflow-hidden m-2"
+      class="w-full h-full"
     />
   );
 }
