@@ -1,10 +1,11 @@
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 import solidPlugin from "vite-plugin-solid";
+import deno from "@deno/vite-plugin";
 
 export default defineConfig({
   root: "web",
-  plugins: [solidPlugin(), tailwindcss()],
+  plugins: [deno(), solidPlugin(), tailwindcss()],
   server: {
     port: 3000,
     proxy: {

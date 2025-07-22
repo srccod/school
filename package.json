@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@corvu/resizable": "^0.2.5",
+    "@deno/vite-plugin": "^1.0.5",
     "@fontsource/fira-code": "^5.2.6",
     "@kobalte/core": "^0.13.10",
     "@modular-forms/solid": "^0.25.1",

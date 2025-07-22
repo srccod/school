@@ -2,7 +2,8 @@
   "compilerOptions": {
     "lib": ["esnext", "DOM", "DOM.Iterable", "deno.ns"],
     "jsx": "react-jsx",
-    "jsxImportSource": "solid-js"
+    "jsxImportSource": "solid-js",
+    "types": ["vite/client"]
   },
   "imports": {
     "@solidjs/router": "npm:@solidjs/router",
