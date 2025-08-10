@@ -5,9 +5,20 @@ import { Resizable, ResizableHandle, ResizablePanel } from "./ui/resizable.tsx";
 import { usePyodide } from "../hooks/usePyodide.ts";
 
 export default function Home() {
-  const [code, setCode] = createSignal(
-    `def say_hello(name):\n   print(f"Hello, {name}!")\n\nsay_hello("World")`,
-  );
+  const [files, setFiles] = createSignal([
+    {
+      name: "main.py",
+      content: `from utils import say_hello
+
+say_hello("World")`,
+    },
+    {
+      name: "utils.py",
+      content: `def say_hello(name):
+   print(f"Hello, {name}!")`,
+    },
+  ]);
+  const [activeFile, setActiveFile] = createSignal(files()[0].name);
   const [output, setOutput] = createSignal("");
 
   const {
@@ -21,7 +32,7 @@ export default function Home() {
       return;
     }
     try {
-      const result = await executePython(code());
+      const result = await executePython(files(), activeFile());
       let outputUpdate = "";
       if (result) {
         outputUpdate += result.output !== "undefined" ? result.output : "";
@@ -36,6 +47,9 @@ export default function Home() {
       console.error("Python execution failed:", err);
     }
   };
+
+  const activeFileContent = () =>
+    files().find((f) => f.name === activeFile())?.content ?? "";
 
   return (
     <Resizable class="">
@@ -55,14 +69,25 @@ export default function Home() {
             class="overflow-hidden"
           >
             <div class="h-full flex flex-col">
-              <CommandBar onRun={handleRunCode} />
+              <CommandBar
+                onRun={handleRunCode}
+                files={files()}
+                activeFile={activeFile()}
+                setActiveFile={setActiveFile}
+              />
               <div class="flex-1 overflow-hidden">
                 <Editor
-                  value={code()}
+                  controlled
+                  value={activeFileContent()}
                   language="python"
                   theme="vs-dark"
-                  uri="main.py"
-                  onChange={(value) => setCode(value)}
+                  uri={activeFile()}
+                  onChange={(value) => {
+                    const newFiles = files().map((f) =>
+                      f.name === activeFile() ? { ...f, content: value } : f
+                    );
+                    setFiles(newFiles);
+                  }}
                   onMount={(editor, monaco) => {
                     editor.addAction({
                       id: "run-code",

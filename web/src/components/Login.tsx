@@ -2,7 +2,7 @@ import { createForm } from "@modular-forms/solid";
 import { useNavigate } from "@solidjs/router";
 import { useUser } from "../stores/user.tsx";
 import type { LoginForm } from "../types.ts";
-import { Button } from "./ui/button.tsx";
+import { Button } from "./ui/Button.tsx";
 import { Grid } from "./ui/Grid.tsx";
 import { TextField, TextFieldInput, TextFieldLabel } from "./ui/TextField.tsx";
 

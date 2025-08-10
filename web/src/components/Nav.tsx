@@ -1,7 +1,7 @@
 import { Show } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { useUser } from "../stores/user.tsx";
-import { Button } from "./ui/button.tsx";
+import { Button } from "./ui/Button.tsx";
 
 export default function Nav() {
   const { user, logout } = useUser();

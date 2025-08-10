@@ -100,7 +100,7 @@ export function usePyodide() {
     }
   });
 
-  const executePython = async (code: string) => {
+  const executePython = async (files: { name: string; content: string }[], entrypoint: string) => {
     if (!worker || isPyodideLoading()) {
       setPyodideError("Pyodide is not ready yet.");
       return;
@@ -118,7 +118,7 @@ export function usePyodide() {
         worker!.postMessage({
           id,
           type: "execute",
-          payload: { code },
+          payload: { files, entrypoint },
         });
       }
     );

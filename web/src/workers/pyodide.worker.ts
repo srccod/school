@@ -52,7 +52,7 @@ self.onmessage = async (event: MessageEvent) => {
       }
       break;
 
-    case "execute":
+    case "execute": {
       if (!pyodide) {
         self.postMessage({
           id,
@@ -61,14 +61,24 @@ self.onmessage = async (event: MessageEvent) => {
         });
         return;
       }
-      const code = payload.code;
+      const { files, entrypoint } = payload;
+      for (const file of files) {
+        pyodide.FS.writeFile(file.name, file.content);
+      }
       setupOutputCapture();
 
       try {
         // reset globals
         const globals = pyodide.globals.get("dict")();
-
-        const result = await pyodide.runPythonAsync(code, { globals });
+        const entrypointContent = files.find(
+          (f: { name: string; content: string }) => f.name === entrypoint
+        )?.content;
+        if (!entrypointContent) {
+          throw new Error(`Entrypoint file "${entrypoint}" not found.`);
+        }
+        const result = await pyodide.runPythonAsync(entrypointContent, {
+          globals,
+        });
 
         globals.destroy();
 
@@ -88,6 +98,7 @@ self.onmessage = async (event: MessageEvent) => {
         });
       }
       break;
+    }
 
     default:
       console.warn("Unknown message type:", type);
