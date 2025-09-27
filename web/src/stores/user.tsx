@@ -3,7 +3,7 @@ import type { ParentProps } from "solid-js";
 import { createContext, useContext } from "solid-js";
 import { createStore } from "solid-js/store";
 import { authClient } from "../lib/authClient.ts";
-import type { LoginForm } from "../types.ts";
+import type { CreateAccountForm, LoginForm } from "../types.ts";
 
 type User = {
   banExpires: Date | null;
@@ -70,6 +70,27 @@ function createUserStore() {
     }
   };
 
+  const createAccount = async (
+    form: CreateAccountForm,
+    navigate: Navigator,
+  ) => {
+    const { data } = await authClient.signUp.email({
+      username: form.username,
+      password: form.password,
+      email: form.email,
+      name: form.name,
+    });
+
+    if (data) {
+      setUser({
+        ...data.user,
+        isLoggedIn: true,
+      });
+
+      navigate("/");
+    }
+  };
+
   const logout = async (navigate: Navigator) => {
     await authClient.signOut({
       fetchOptions: {
@@ -82,6 +103,7 @@ function createUserStore() {
   };
 
   return {
+    createAccount,
     initialize,
     login,
     logout,
