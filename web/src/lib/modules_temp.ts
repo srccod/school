@@ -26,8 +26,14 @@ export const codeMods: Record<string, CodeMod> = {
         content: calculator,
       },
     ],
-    instructions:
-      "Here is a simple calculator program. Try to add a new function to it.",
+    instructions: `# Calculator
+      
+      This module provides basic arithmetic functions: 
+        - addition
+        - subtraction
+        - multiplication
+        - division
+      `,
   },
   "hello-world": {
     files: [

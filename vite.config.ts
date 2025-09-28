@@ -23,4 +23,7 @@ export default defineConfig({
   worker: {
     format: "es",
   },
+  optimizeDeps: {
+    include: ["solid-markdown > micromark", "solid-markdown > unified"],
+  },
 });

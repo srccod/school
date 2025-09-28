@@ -5,6 +5,7 @@ import CommandBar from "./CommandBar.tsx";
 import Editor from "./Editor.tsx";
 import { Resizable, ResizableHandle, ResizablePanel } from "./ui/resizable.tsx";
 import { usePyodide } from "../hooks/usePyodide.ts";
+import { SolidMarkdown } from "solid-markdown";
 
 export default function Main() {
   const params = useParams();
@@ -67,8 +68,10 @@ export default function Main() {
         initialSize={0.35}
         class="overflow-hidden"
       >
-        <div class="flex h-full p-6">
-          <span class="font-semibold">{module()?.instructions}</span>
+        <div class="prose dark:prose-invert h-full p-6">
+          <SolidMarkdown class="prose dark:prose-invert h-full p-6">
+            {module()?.instructions || ""}
+          </SolidMarkdown>
         </div>
       </ResizablePanel>
       <ResizableHandle />
