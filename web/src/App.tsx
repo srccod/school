@@ -14,7 +14,7 @@ const App: Component = () => {
         <Route path="/login" component={Login} />
         <Route path="/create-account" component={CreateAccount} />
         <Route path="/" component={Protected}>
-          <Route path="/" component={Main} />
+          <Route path="/:slug?" component={Main} />
         </Route>
       </Router>
     </UserProvider>

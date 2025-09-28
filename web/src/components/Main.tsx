@@ -1,24 +1,18 @@
-import { createSignal } from "solid-js";
+import { useParams } from "@solidjs/router";
+import { createSignal, onMount } from "solid-js";
+import { type CodeMod, codeMods } from "../lib/modules_temp.ts";
 import CommandBar from "./CommandBar.tsx";
 import Editor from "./Editor.tsx";
 import { Resizable, ResizableHandle, ResizablePanel } from "./ui/resizable.tsx";
 import { usePyodide } from "../hooks/usePyodide.ts";
 
-export default function Home() {
-  const [files, setFiles] = createSignal([
-    {
-      name: "main.py",
-      content: `from utils import say_hello
-
-say_hello("World")`,
-    },
-    {
-      name: "utils.py",
-      content: `def say_hello(name):
-   print(f"Hello, {name}!")`,
-    },
-  ]);
-  const [activeFile, setActiveFile] = createSignal(files()[0].name);
+export default function Main() {
+  const params = useParams();
+  const [module, setModule] = createSignal<CodeMod | null>(null);
+  const [files, setFiles] = createSignal<{ name: string; content: string }[]>(
+    [],
+  );
+  const [activeFile, setActiveFile] = createSignal("");
   const [output, setOutput] = createSignal("");
 
   const {
@@ -26,6 +20,22 @@ say_hello("World")`,
     isExecuting,
     executePython,
   } = usePyodide();
+
+  onMount(() => {
+    const slug = params.slug;
+
+    if (slug) {
+      const currentModule = codeMods[slug];
+      if (currentModule) {
+        setModule(currentModule);
+        setFiles(currentModule.files);
+        setActiveFile(currentModule.files[0].name);
+      }
+    } else {
+      setFiles(codeMods["getting-started"].files);
+      setActiveFile(codeMods["getting-started"].files[0].name);
+    }
+  });
 
   const handleRunCode = async () => {
     if (isPyodideLoading() || isExecuting()) {
@@ -58,7 +68,7 @@ say_hello("World")`,
         class="overflow-hidden"
       >
         <div class="flex h-full p-6">
-          <span class="font-semibold">Lesson Text</span>
+          <span class="font-semibold">{module()?.instructions}</span>
         </div>
       </ResizablePanel>
       <ResizableHandle />
@@ -88,14 +98,11 @@ say_hello("World")`,
                     );
                     setFiles(newFiles);
                   }}
-                  onMount={(editor, monaco) => {
+                  onMount={(editor, _monaco) => {
                     editor.addAction({
                       id: "run-code",
                       label: "Run Code",
-                      keybindings: [
-                        monaco.KeyMod.CtrlCmd |
-                        monaco.KeyCode.F9,
-                      ],
+                      keybindings: [],
                       run: () => {
                         handleRunCode();
                       },
