@@ -20,6 +20,24 @@ const Icon = (props: IconProps) => {
   );
 };
 
+export const ChevronLeftIcon = (props: IconProps) => {
+  return (
+    <Icon viewBox="0 0 24 24" {...props}>
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M15 6l-6 6l6 6" />
+    </Icon>
+  );
+};
+
+export const ChevronRightIcon = (props: IconProps) => {
+  return (
+    <Icon viewBox="0 0 24 24" {...props}>
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M9 6l6 6l-6 6" />
+    </Icon>
+  );
+};
+
 export const RunIcon = (props: IconProps) => {
   return (
     <Icon viewBox="0 0 24 24" {...props}>

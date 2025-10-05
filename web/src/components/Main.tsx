@@ -5,8 +5,8 @@ import CommandBar from "./CommandBar.tsx";
 import Editor from "./Editor.tsx";
 import { Resizable, ResizableHandle, ResizablePanel } from "./ui/resizable.tsx";
 import { usePyodide } from "../hooks/usePyodide.ts";
-import { SolidMarkdown } from "solid-markdown";
 import * as monaco from "monaco-editor";
+import Instructions from "./Instructions.tsx";
 
 export default function Main() {
   const params = useParams();
@@ -108,11 +108,7 @@ export default function Main() {
   return (
     <Resizable class="">
       <ResizablePanel initialSize={0.35} class="overflow-hidden">
-        <div class="prose dark:prose-invert h-full p-6">
-          <SolidMarkdown class="prose dark:prose-invert h-full p-6">
-            {module()?.instructions || ""}
-          </SolidMarkdown>
-        </div>
+        <Instructions module={module()} />
       </ResizablePanel>
       <ResizableHandle />
       <ResizablePanel initialSize={0.65} class="overflow-hidden">
