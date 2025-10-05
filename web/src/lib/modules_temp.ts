@@ -50,6 +50,17 @@ export const codeMods: Record<string, CodeMod> = {
     ],
     instructions: "This is a simple hello world program.",
   },
+  "interactive-input": {
+    files: [
+      {
+        id: "FAKE_ID_5",
+        name: "main.py",
+        content: `name = input("Enter your name: ")\nprint(f"Hello, {name}!")`,
+      },
+    ],
+    instructions:
+      "This program prompts the user for their name and then greets them.",
+  },
   "getting-started": {
     files: [
       {
