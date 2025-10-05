@@ -326,3 +326,7 @@
     content: counter(step);
   }
 }
+
+.editor-readonly .cursors-layer > .cursor {
+  display: none;
+}

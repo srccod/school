@@ -1,11 +1,12 @@
 import { useParams } from "@solidjs/router";
-import { createSignal, onMount } from "solid-js";
+import { createEffect, createSignal, onMount } from "solid-js";
 import { type CodeMod, codeMods } from "../lib/modules_temp.ts";
 import CommandBar from "./CommandBar.tsx";
 import Editor from "./Editor.tsx";
 import { Resizable, ResizableHandle, ResizablePanel } from "./ui/resizable.tsx";
 import { usePyodide } from "../hooks/usePyodide.ts";
 import { SolidMarkdown } from "solid-markdown";
+import * as monaco from "monaco-editor";
 
 export default function Main() {
   const params = useParams();
@@ -14,13 +15,65 @@ export default function Main() {
     [],
   );
   const [activeFile, setActiveFile] = createSignal("");
-  const [output, setOutput] = createSignal("");
+
+  let codeEditor: monaco.editor.IStandaloneCodeEditor | undefined;
+  let outputEditor: monaco.editor.IStandaloneCodeEditor | undefined;
+  let inputStartColumn = 0;
 
   const {
     isPyodideLoading,
     isExecuting,
+    pyodideStream,
+    setPyodideStream,
+    isAwaitingInput,
+    sendInput,
     executePython,
   } = usePyodide();
+
+  // auto-scroll output editor to bottom on new output or input prompt
+  createEffect(() => {
+    // subscribe to changes
+    pyodideStream();
+    isAwaitingInput();
+
+    if (outputEditor) {
+      const model = outputEditor.getModel();
+      if (model) {
+        const lineCount = model.getLineCount();
+        const lastLineLength = model.getLineContent(lineCount).length;
+        const newPosition = {
+          lineNumber: lineCount,
+          column: lastLineLength + 1,
+        };
+        outputEditor.setPosition(newPosition);
+        outputEditor.revealPosition(newPosition);
+      }
+    }
+  });
+
+  // track when input is requested & set cursor position
+  createEffect(() => {
+    if (isAwaitingInput()) {
+      if (outputEditor) {
+        const model = outputEditor.getModel();
+        if (model) {
+          const lineCount = model.getLineCount();
+          inputStartColumn = model.getLineContent(lineCount).length + 1;
+        }
+      }
+    }
+  });
+
+  // refocus code editor when execution completes
+  createEffect((prevIsExecuting) => {
+    const currentIsExecuting = isExecuting();
+    if (prevIsExecuting && !currentIsExecuting) {
+      if (codeEditor) {
+        codeEditor.focus();
+      }
+    }
+    return currentIsExecuting;
+  }, isExecuting());
 
   onMount(() => {
     const slug = params.slug;
@@ -43,17 +96,7 @@ export default function Main() {
       return;
     }
     try {
-      const result = await executePython(files(), activeFile());
-      let outputUpdate = "";
-      if (result) {
-        outputUpdate += result.output !== "undefined" ? result.output : "";
-        outputUpdate += result.returnValue !== "undefined"
-          ? result.returnValue
-          : "";
-      }
-      setOutput(outputUpdate);
-      console.log("Python execution result:", result);
-      console.log("Output:", output());
+      await executePython(files(), activeFile());
     } catch (err) {
       console.error("Python execution failed:", err);
     }
@@ -64,10 +107,7 @@ export default function Main() {
 
   return (
     <Resizable class="">
-      <ResizablePanel
-        initialSize={0.35}
-        class="overflow-hidden"
-      >
+      <ResizablePanel initialSize={0.35} class="overflow-hidden">
         <div class="prose dark:prose-invert h-full p-6">
           <SolidMarkdown class="prose dark:prose-invert h-full p-6">
             {module()?.instructions || ""}
@@ -77,10 +117,7 @@ export default function Main() {
       <ResizableHandle />
       <ResizablePanel initialSize={0.65} class="overflow-hidden">
         <Resizable orientation="vertical">
-          <ResizablePanel
-            initialSize={0.5}
-            class="overflow-hidden"
-          >
+          <ResizablePanel initialSize={0.5} class="overflow-hidden">
             <div class="h-full flex flex-col">
               <CommandBar
                 onRun={handleRunCode}
@@ -102,6 +139,7 @@ export default function Main() {
                     setFiles(newFiles);
                   }}
                   onMount={(editor, _monaco) => {
+                    codeEditor = editor;
                     editor.addAction({
                       id: "run-code",
                       label: "Run Code",
@@ -122,26 +160,54 @@ export default function Main() {
             </div>
           </ResizablePanel>
           <ResizableHandle />
-          <ResizablePanel
-            initialSize={0.5}
-            class="overflow-hidden"
-          >
+          <ResizablePanel initialSize={0.5} class="overflow-hidden">
             <div class="h-full flex flex-col">
               <div class="flex-1 overflow-hidden">
                 <Editor
                   controlled
-                  value={output()}
-                  language="python"
+                  value={pyodideStream()}
+                  language="plaintext"
                   theme="vs-dark"
                   uri="output"
-                  onMount={(_editor, _monaco) => {
+                  onMount={(editor, _monaco) => {
+                    outputEditor = editor;
+                    createEffect(() => {
+                      const isReadOnly = !isAwaitingInput();
+                      editor.updateOptions({ readOnly: isReadOnly });
+                      if (!isReadOnly) {
+                        editor.focus();
+                      }
+                      const domNode = editor.getDomNode();
+                      if (domNode) {
+                        if (isReadOnly) {
+                          domNode.classList.add("editor-readonly");
+                        } else {
+                          domNode.classList.remove("editor-readonly");
+                        }
+                      }
+                    });
+                    editor.onKeyDown((e) => {
+                      if (isAwaitingInput() && e.code === "Enter") {
+                        e.preventDefault();
+                        const model = editor.getModel();
+                        if (model) {
+                          const lineCount = model.getLineCount();
+                          const currentLine = model.getLineContent(lineCount);
+                          const input = currentLine.substring(
+                            inputStartColumn - 1,
+                          );
+                          sendInput(input);
+                          setPyodideStream((prev) => prev + input + "\n");
+                        }
+                      }
+                    });
                     console.log("output editor mounted");
                   }}
                   options={{
-                    readOnly: true,
-                    lineNumbers: "off",
                     fontSize: 14,
+                    lineNumbers: "off",
                     minimap: { enabled: false },
+                    renderLineHighlight: "none",
                     scrollBeyondLastLine: false,
                   }}
                 />

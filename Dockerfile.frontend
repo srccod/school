@@ -1,0 +1,27 @@
+# Stage 1: Build the SolidJS application
+FROM node:20-alpine AS build
+
+WORKDIR /app
+
+# Copy package.json and package-lock.json
+COPY package.json package-lock.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy the rest of the web application code
+COPY . .
+
+# Build the application
+RUN npm run build
+
+# Stage 2: Serve the built application with Caddy
+FROM caddy:2-alpine
+
+WORKDIR /usr/share/caddy
+
+# Copy the Caddyfile
+COPY Caddyfile /etc/caddy/Caddyfile
+
+# Copy the built static files from the build stage
+COPY --from=build /app/web/dist .
