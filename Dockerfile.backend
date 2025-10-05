@@ -1,0 +1,15 @@
+FROM denoland/deno:2.5.2
+
+WORKDIR /app
+
+# The port that your application listens on.
+EXPOSE 3001
+
+# Prefer to cache dependencies before adding the rest of the code.
+# This will leverage Docker's layer caching.
+COPY server/src/ /app/server/src/
+RUN deno cache server/src/server.ts
+
+# Command to run your application.
+# Adjust permissions as needed.
+CMD ["run", "--allow-net", "--allow-read", "--allow-env", "server/src/server.ts"]
