@@ -3,7 +3,6 @@
 import { loadPyodide, type PyodideInterface } from "pyodide";
 
 let pyodide: PyodideInterface | null = null;
-let captureOutput = "";
 let sharedMem: SharedArrayBuffer | null = null;
 let control: Int32Array | null = null;
 let dataView: Uint8Array | null = null;
@@ -66,20 +65,18 @@ function stdinSync() {
 
 function write(buffer: Uint8Array): number {
   const chunk = textDecoder.decode(buffer, { stream: true });
-  captureOutput += chunk;
+  self.postMessage({ type: "stream-output", output: chunk });
   return buffer.length;
 }
 
 function setupOutputCapture() {
-  captureOutput = "";
-
   if (pyodide) {
     pyodide.setStdout({
-      // isatty: true,
+      isatty: false,
       write,
     });
     pyodide.setStderr({
-      // isatty: true,
+      isatty: false,
       write,
     });
   }
@@ -95,7 +92,7 @@ self.onmessage = async (event: MessageEvent) => {
         pyodide = await loadPyodide({
           indexURL: "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/",
         });
-        pyodide.setStdin({ stdin: () => stdinSync() });
+        pyodide.setStdin({ stdin: () => stdinSync(), isatty: false });
         setupOutputCapture();
         console.log("Pyodide initialized in worker.");
       }
@@ -137,7 +134,7 @@ self.onmessage = async (event: MessageEvent) => {
       if (!entrypointContent) {
         throw new Error(`Entrypoint file "${entrypoint}" not found.`);
       }
-      const result = await pyodide.runPythonAsync(entrypointContent, {
+      await pyodide.runPythonAsync(entrypointContent, {
         globals,
       });
 
@@ -146,15 +143,12 @@ self.onmessage = async (event: MessageEvent) => {
       self.postMessage({
         id,
         type: "execute-success",
-        output: captureOutput,
-        returnValue: String(result),
       });
     } catch (error) {
       console.error("Python execution error:", error);
       self.postMessage({
         id,
         type: "execute-error",
-        output: captureOutput,
         error: error instanceof Error ? error.message : String(error),
       });
     }

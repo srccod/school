@@ -12,16 +12,10 @@ type WorkerMessage = {
   returnValue?: string;
 };
 
-type PendingPromiseValue =
-  | boolean
-  | WorkerMessage
-  | { output: string; returnValue: string }
-  | unknown;
-
 const pendingPromises = new Map<
   string,
   {
-    resolve: (value: PendingPromiseValue) => void;
+    resolve: (value: unknown) => void;
     reject: (reason?: unknown) => void;
   }
 >();
@@ -61,11 +55,13 @@ function writeInput(sab: SharedArrayBuffer, input: string) {
 
 export function usePyodide() {
   const [isPyodideLoading, setIsPyodideLoading] = createSignal(true);
-  const [pyodideOutput, setPyodideOutput] = createSignal("");
+  const [pyodideStream, setPyodideStream] = createSignal("");
   const [pyodideError, setPyodideError] = createSignal<string | null>(null);
   const [isExecuting, setIsExecuting] = createSignal(false);
+  const [isAwaitingInput, setIsAwaitingInput] = createSignal(false);
 
   let worker: Worker | undefined;
+  let sharedMem: SharedArrayBuffer | undefined;
 
   onMount(() => {
     worker = new PyodideWorker();
@@ -75,10 +71,10 @@ export function usePyodide() {
       return;
     }
 
-    const sharedMem = new SharedArrayBuffer(SHARED_MEM_SIZE);
+    sharedMem = new SharedArrayBuffer(SHARED_MEM_SIZE);
 
     worker.onmessage = (event: MessageEvent<WorkerMessage>) => {
-      const { id, type, output, error, returnValue } = event.data;
+      const { id, type, output, error } = event.data;
 
       if (type === "init-success") {
         setIsPyodideLoading(false);
@@ -100,28 +96,33 @@ export function usePyodide() {
         return;
       }
       if (type === "input-request") {
-        const answer = prompt("Pyodide is requesting input:");
-        writeInput(sharedMem, answer || "");
+        setIsAwaitingInput(true);
+        return;
+      }
+      if (type === "stream-output") {
+        if (output) {
+          setPyodideStream((prev) => prev + output);
+        }
         return;
       }
       if (type === "execute-success") {
         setIsExecuting(false);
-        setPyodideOutput(output || "");
+        setIsAwaitingInput(false);
         setPyodideError(null);
         const execPromise = pendingPromises.get(id);
         if (execPromise) {
-          execPromise.resolve({ output: output, returnValue: returnValue });
+          execPromise.resolve(true);
           pendingPromises.delete(id);
         }
         return;
       }
       if (type === "execute-error") {
         setIsExecuting(false);
-        setPyodideOutput(output || "");
+        setIsAwaitingInput(false);
         setPyodideError(error || "Unknown Python execution error.");
         const execErrorPromise = pendingPromises.get(id);
         if (execErrorPromise) {
-          execErrorPromise.resolve({ output: output, returnValue: error });
+          execErrorPromise.reject(error);
           pendingPromises.delete(id);
         }
         return;
@@ -153,35 +154,43 @@ export function usePyodide() {
   const executePython = (
     files: { name: string; content: string }[],
     entrypoint: string
-  ) => {
+  ): Promise<void> => {
     if (!worker || isPyodideLoading()) {
       setPyodideError("Pyodide is not ready yet.");
-      return;
+      return Promise.reject("Pyodide is not ready yet.");
     }
     setIsExecuting(true);
-    setPyodideOutput("");
+    setPyodideStream("");
     setPyodideError(null);
 
     const id = generateID();
 
-    return new Promise<{ output: string; returnValue: string } | null>(
-      (resolve, reject) => {
-        pendingPromises.set(id, { resolve, reject });
+    return new Promise<void>((resolve, reject) => {
+      pendingPromises.set(id, { resolve, reject });
 
-        worker!.postMessage({
-          id,
-          type: "execute",
-          payload: { files, entrypoint },
-        });
-      }
-    );
+      worker!.postMessage({
+        id,
+        type: "execute",
+        payload: { files, entrypoint },
+      });
+    });
+  };
+
+  const sendInput = (value: string) => {
+    if (worker && isAwaitingInput() && sharedMem) {
+      writeInput(sharedMem, value);
+      setIsAwaitingInput(false);
+    }
   };
 
   return {
     isPyodideLoading,
     isExecuting,
-    pyodideOutput,
+    pyodideStream,
+    setPyodideStream,
     pyodideError,
+    isAwaitingInput,
     executePython,
+    sendInput,
   };
 }
