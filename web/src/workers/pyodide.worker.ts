@@ -78,13 +78,20 @@ function stdinSync() {
 
 function write(buffer: Uint8Array): number {
   const chunk = textDecoder.decode(buffer, { stream: true });
-  // Append to shared output buffer
+  // append to shared output buffer
   if (outputMem && outputControl && outputDataView) {
     const bytes = new TextEncoder().encode(chunk);
-    const pos = Atomics.load(outputControl, 2);
+    let pos = Atomics.load(outputControl, 2);
     if (pos + bytes.length > outputDataView.byteLength) {
-      console.warn("Output buffer overflow, skipping chunk.");
-      return buffer.length;
+      // buffer full, reset it
+      console.warn("Output buffer overflow, resetting buffer.");
+      outputDataView.fill(0);
+      Atomics.store(outputControl, 2, 0);
+      pos = 0;
+      if (bytes.length > outputDataView.byteLength) {
+        console.warn("Output chunk too large for buffer, skipping.");
+        return buffer.length;
+      }
     }
     outputDataView.set(bytes, pos);
     const newPos = pos + bytes.length;

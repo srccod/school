@@ -79,6 +79,10 @@ export function usePyodide() {
     const flag = Atomics.load(control, 0);
     if (flag === 1) {
       const len = Atomics.load(control, 1);
+      if (len < lastReadPos) {
+        // Buffer was reset, reset lastReadPos
+        lastReadPos = 0;
+      }
       if (len > lastReadPos) {
         const bytes = new Uint8Array(len - lastReadPos);
         bytes.set(dataView.subarray(lastReadPos, len));
