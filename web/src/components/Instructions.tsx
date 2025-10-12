@@ -2,18 +2,16 @@ import { createEffect, createSignal, Show } from "solid-js";
 import { SolidMarkdown } from "solid-markdown";
 import { Button } from "./ui/Button.tsx";
 import { ChevronLeftIcon, ChevronRightIcon } from "./icons.tsx";
-import type { CodeMod } from "../lib/modules_temp.ts";
+import type { ModuleResponse } from "../../../shared-types.ts";
 
-interface InstructionsProps {
-  module: CodeMod | null;
-}
-
-export default function Instructions(props: InstructionsProps) {
+export default function Instructions(
+  props: { module: ModuleResponse | null | undefined },
+) {
   const [instructionStep, setInstructionStep] = createSignal(0);
 
   // reset instruction step when module changes
   createEffect(() => {
-    props.module;
+    props.module?.slug;
     setInstructionStep(0);
   });
 
@@ -25,7 +23,7 @@ export default function Instructions(props: InstructionsProps) {
     <div class="prose dark:prose-invert h-full p-6 flex flex-col">
       <div class="flex-1 overflow-y-auto">
         <SolidMarkdown class="prose dark:prose-invert">
-          {currentInstruction() || ""}
+          {currentInstruction()?.text || ""}
         </SolidMarkdown>
       </div>
       <Show when={instructionCount() > 1}>
