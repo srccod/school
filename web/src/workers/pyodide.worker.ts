@@ -6,16 +6,26 @@ let pyodide: PyodideInterface | null = null;
 let sharedMem: SharedArrayBuffer | null = null;
 let control: Int32Array | null = null;
 let dataView: Uint8Array | null = null;
+let outputMem: SharedArrayBuffer | null = null;
+let outputControl: Int32Array | null = null;
+let outputDataView: Uint8Array | null = null;
 const CONTROL_BYTE_LENGTH = 8;
 const textDecoder = new TextDecoder();
 
-function initSharedMem(sab: SharedArrayBuffer) {
-  sharedMem = sab;
-  control = new Int32Array(sab, 0, 2);
-  dataView = new Uint8Array(sab, CONTROL_BYTE_LENGTH);
+function initSharedMem(inputSab: SharedArrayBuffer, outSab: SharedArrayBuffer) {
+  sharedMem = inputSab;
+  control = new Int32Array(inputSab, 0, 2);
+  dataView = new Uint8Array(inputSab, CONTROL_BYTE_LENGTH);
+
+  outputMem = outSab;
+  outputControl = new Int32Array(outSab, 0, 2);
+  outputDataView = new Uint8Array(outSab, CONTROL_BYTE_LENGTH);
 
   Atomics.store(control, 0, 0); // flag = 0
   Atomics.store(control, 1, 0); // length = 0
+
+  Atomics.store(outputControl, 0, 0); // flag = 0
+  Atomics.store(outputControl, 1, 0); // length = 0
 }
 
 function stdinSync() {
@@ -65,7 +75,18 @@ function stdinSync() {
 
 function write(buffer: Uint8Array): number {
   const chunk = textDecoder.decode(buffer, { stream: true });
-  self.postMessage({ type: "stream-output", output: chunk });
+  // write to shared output buffer
+  if (outputMem && outputControl && outputDataView) {
+    const bytes = new TextEncoder().encode(chunk);
+    if (bytes.length <= outputDataView.byteLength) {
+      outputDataView.fill(0);
+      outputDataView.set(bytes, 0);
+      Atomics.store(outputControl, 1, bytes.length);
+      Atomics.store(outputControl, 0, 1); // flag = 1
+    } else {
+      console.warn("Output chunk too large for buffer, skipping.");
+    }
+  }
   return buffer.length;
 }
 
@@ -88,7 +109,7 @@ self.onmessage = async (event: MessageEvent) => {
   if (type === "init") {
     try {
       if (!pyodide) {
-        initSharedMem(payload);
+        initSharedMem(payload.inputSab, payload.outputSab);
         pyodide = await loadPyodide({
           indexURL: "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/",
         });
@@ -122,6 +143,11 @@ self.onmessage = async (event: MessageEvent) => {
     const { files, entrypoint } = payload;
     for (const file of files) {
       pyodide.FS.writeFile(file.name, file.content);
+    }
+    // clear module cache for all files to ensure changes are reflected
+    for (const file of files) {
+      const moduleName = file.name.replace(/\.py$/, "");
+      pyodide.runPython(`import sys; sys.modules.pop('${moduleName}', None)`);
     }
     setupOutputCapture();
 

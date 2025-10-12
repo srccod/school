@@ -15,7 +15,7 @@ type WorkerMessage = {
 const pendingPromises = new Map<
   string,
   {
-    resolve: (value: unknown) => void;
+    resolve: (value?: unknown) => void;
     reject: (reason?: unknown) => void;
   }
 >();
@@ -23,6 +23,7 @@ const pendingPromises = new Map<
 const CONTROL_BYTE_LENGTH = 8;
 const SHARED_MEM_SIZE = 10 * 1024; // 10 KB
 const textEncoder = new TextEncoder();
+const textDecoder = new TextDecoder();
 
 /**
  * Write a string into the shared memory buffer for stdin.
@@ -62,6 +63,32 @@ export function usePyodide() {
 
   let worker: Worker | undefined;
   let sharedMem: SharedArrayBuffer | undefined;
+  let outputMem: SharedArrayBuffer | undefined;
+  let outputInterval: number | undefined;
+
+  /**
+   * Read output from the shared memory buffer for stdout/stderr.
+   * @param sab The SharedArrayBuffer for outpunsputt
+   * @returns The string read, or null if no data
+   */
+  function readOutput(sab: SharedArrayBuffer): string | null {
+    const control = new Int32Array(sab, 0, 2);
+    const dataView = new Uint8Array(sab, CONTROL_BYTE_LENGTH);
+
+    const flag = Atomics.load(control, 0);
+    if (flag === 1) {
+      const len = Atomics.load(control, 1);
+      const bytes = new Uint8Array(len);
+      bytes.set(dataView.subarray(0, len));
+      const s = textDecoder.decode(bytes);
+
+      // Reset flag to 0
+      Atomics.store(control, 0, 0);
+      Atomics.store(control, 1, 0);
+      return s;
+    }
+    return null;
+  }
 
   onMount(() => {
     worker = new PyodideWorker();
@@ -72,6 +99,7 @@ export function usePyodide() {
     }
 
     sharedMem = new SharedArrayBuffer(SHARED_MEM_SIZE);
+    outputMem = new SharedArrayBuffer(SHARED_MEM_SIZE);
 
     worker.onmessage = (event: MessageEvent<WorkerMessage>) => {
       const { id, type, output, error } = event.data;
@@ -99,12 +127,6 @@ export function usePyodide() {
         setIsAwaitingInput(true);
         return;
       }
-      if (type === "stream-output") {
-        if (output) {
-          setPyodideStream((prev) => prev + output);
-        }
-        return;
-      }
       if (type === "execute-success") {
         setIsExecuting(false);
         setIsAwaitingInput(false);
@@ -120,6 +142,7 @@ export function usePyodide() {
         setIsExecuting(false);
         setIsAwaitingInput(false);
         setPyodideError(error || "Unknown Python execution error.");
+        setPyodideStream((prev) => prev + (error || "Unknown error") + "\n");
         const execErrorPromise = pendingPromises.get(id);
         if (execErrorPromise) {
           execErrorPromise.reject(error);
@@ -138,13 +161,31 @@ export function usePyodide() {
 
     const initId = generateID();
 
-    worker.postMessage({ id: initId, type: "init", payload: sharedMem });
+    worker.postMessage({
+      id: initId,
+      type: "init",
+      payload: { inputSab: sharedMem, outputSab: outputMem },
+    });
+
+    // Start polling for output
+    outputInterval = setInterval(() => {
+      if (outputMem) {
+        const out = readOutput(outputMem);
+        if (out) {
+          setPyodideStream((prev) => prev + out);
+        }
+      }
+    }, 10); // Poll every 10ms
+
     return new Promise((resolve, reject) => {
       pendingPromises.set(initId, { resolve, reject });
     });
   });
 
   onCleanup(() => {
+    if (outputInterval) {
+      clearInterval(outputInterval);
+    }
     if (worker) {
       worker.terminate();
       worker = undefined;
@@ -190,6 +231,7 @@ export function usePyodide() {
     setPyodideStream,
     pyodideError,
     isAwaitingInput,
+    setIsAwaitingInput,
     executePython,
     sendInput,
   };
