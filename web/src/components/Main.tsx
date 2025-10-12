@@ -1,5 +1,12 @@
 import { useParams } from "@solidjs/router";
-import { createEffect, createResource, createSignal, Show } from "solid-js";
+import {
+  createEffect,
+  createResource,
+  createSignal,
+  onCleanup,
+  onMount,
+  Show,
+} from "solid-js";
 import CommandBar from "./CommandBar.tsx";
 import Editor from "./Editor.tsx";
 import { Resizable, ResizableHandle, ResizablePanel } from "./ui/resizable.tsx";
@@ -142,6 +149,15 @@ export default function Main() {
       codeEditor.trigger("", "redo", {});
     }
   };
+
+  onMount(() => {
+    const interval = setInterval(() => {
+      handleSave();
+    }, 10000); // auto-save every 10 seconds
+    onCleanup(() => {
+      clearInterval(interval);
+    });
+  });
 
   const activeFileContent = () =>
     files().find((f) => f.name === activeFile())?.content ?? "";
