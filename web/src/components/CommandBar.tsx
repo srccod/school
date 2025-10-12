@@ -1,9 +1,11 @@
-import { For } from "solid-js";
+import { For, Show } from "solid-js";
 import { Button } from "./ui/Button.tsx";
-import { RunIcon } from "./icons.tsx";
+import { RunIcon, StopIcon } from "./icons.tsx";
 
 type CommandBarProps = {
   onRun: () => void;
+  onInterrupt?: () => void;
+  isExecuting?: boolean;
   files: { name: string; content: string }[];
   activeFile: string;
   setActiveFile: (name: string) => void;
@@ -27,9 +29,18 @@ export default function CommandBar(props: CommandBarProps) {
       </div>
       <ul>
         <li>
-          <Button onclick={props.onRun} variant="ghost" size="sm">
-            <RunIcon class="" />
-          </Button>
+          <Show
+            when={props.isExecuting}
+            fallback={
+              <Button onclick={props.onRun} variant="ghost" size="sm">
+                <RunIcon class="" />
+              </Button>
+            }
+          >
+            <Button onclick={props.onInterrupt} variant="ghost" size="sm">
+              <StopIcon class="" />
+            </Button>
+          </Show>
         </li>
       </ul>
     </div>

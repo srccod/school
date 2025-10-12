@@ -125,6 +125,7 @@ self.onmessage = async (event: MessageEvent) => {
         pyodide = await loadPyodide({
           indexURL: "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/",
         });
+        pyodide.setInterruptBuffer(new Uint8Array(payload.interruptSab));
         pyodide.setStdin({ stdin: () => stdinSync(), isatty: false });
         setupOutputCapture();
         console.log("Pyodide initialized in worker.");

@@ -25,6 +25,7 @@ export default function Main() {
     isAwaitingInput,
     sendInput,
     executePython,
+    sendInterrupt,
   } = usePyodide();
 
   // auto-scroll output editor to bottom on new output or input prompt
@@ -124,6 +125,8 @@ export default function Main() {
                 <div class="h-full flex flex-col">
                   <CommandBar
                     onRun={handleRunCode}
+                    onInterrupt={sendInterrupt}
+                    isExecuting={isExecuting()}
                     files={files()}
                     activeFile={activeFile()}
                     setActiveFile={setActiveFile}

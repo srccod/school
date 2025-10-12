@@ -66,6 +66,7 @@ export function usePyodide() {
   let outputMem: SharedArrayBuffer | undefined;
   let outputInterval: number | undefined;
   let lastReadPos = 0;
+  let interruptBuffer: Uint8Array | undefined;
 
   /**
    * Read output from the shared memory buffer for stdout/stderr.
@@ -106,6 +107,8 @@ export function usePyodide() {
 
     sharedMem = new SharedArrayBuffer(SHARED_MEM_SIZE);
     outputMem = new SharedArrayBuffer(SHARED_MEM_SIZE);
+    const interruptSab = new SharedArrayBuffer(1);
+    interruptBuffer = new Uint8Array(interruptSab);
 
     worker.onmessage = (event: MessageEvent<WorkerMessage>) => {
       const { id, type, output, error } = event.data;
@@ -170,7 +173,7 @@ export function usePyodide() {
     worker.postMessage({
       id: initId,
       type: "init",
-      payload: { inputSab: sharedMem, outputSab: outputMem },
+      payload: { inputSab: sharedMem, outputSab: outputMem, interruptSab },
     });
 
     // Start polling for output
@@ -210,6 +213,7 @@ export function usePyodide() {
     setPyodideStream("");
     setPyodideError(null);
     lastReadPos = 0;
+    if (interruptBuffer) interruptBuffer[0] = 0;
 
     const id = generateID();
 
@@ -222,6 +226,12 @@ export function usePyodide() {
         payload: { files, entrypoint },
       });
     });
+  };
+
+  const sendInterrupt = () => {
+    if (interruptBuffer) {
+      interruptBuffer[0] = 2;
+    }
   };
 
   const sendInput = (value: string) => {
@@ -241,5 +251,6 @@ export function usePyodide() {
     setIsAwaitingInput,
     executePython,
     sendInput,
+    sendInterrupt,
   };
 }
