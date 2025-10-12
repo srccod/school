@@ -66,3 +66,23 @@ export const SaveIcon = (props: IconProps) => {
     </Icon>
   );
 };
+
+export const UndoIcon = (props: IconProps) => {
+  return (
+    <Icon viewBox="0 0 24 24" {...props}>
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M9 14l-4 -4l4 -4" />
+      <path d="M5 10h11a4 4 0 1 1 0 8h-1" />
+    </Icon>
+  );
+};
+
+export const RedoIcon = (props: IconProps) => {
+  return (
+    <Icon viewBox="0 0 24 24" {...props}>
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M15 14l4 -4l-4 -4" />
+      <path d="M19 10h-11a4 4 0 1 1 0 -8h1" />
+    </Icon>
+  );
+};

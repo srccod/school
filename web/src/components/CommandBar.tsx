@@ -1,10 +1,12 @@
 import { For, Show } from "solid-js";
 import { Button } from "./ui/Button.tsx";
-import { RunIcon, SaveIcon, StopIcon } from "./icons.tsx";
+import { RedoIcon, RunIcon, SaveIcon, StopIcon, UndoIcon } from "./icons.tsx";
 
 type CommandBarProps = {
   onRun: () => void;
   onSave?: () => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
   onInterrupt?: () => void;
   isExecuting?: boolean;
   files: { name: string; content: string }[];
@@ -36,6 +38,26 @@ export default function CommandBar(props: CommandBarProps) {
           >
             <Button onclick={props.onSave} variant="ghost" size="sm">
               <SaveIcon class="" />
+            </Button>
+          </Show>
+        </li>
+        <li>
+          <Show
+            when={props.onUndo}
+            fallback={<div />}
+          >
+            <Button onclick={props.onUndo} variant="ghost" size="sm">
+              <UndoIcon class="" />
+            </Button>
+          </Show>
+        </li>
+        <li>
+          <Show
+            when={props.onRedo}
+            fallback={<div />}
+          >
+            <Button onclick={props.onRedo} variant="ghost" size="sm">
+              <RedoIcon class="" />
             </Button>
           </Show>
         </li>

@@ -6,9 +6,8 @@ import { Resizable, ResizableHandle, ResizablePanel } from "./ui/resizable.tsx";
 import { usePyodide } from "../hooks/usePyodide.ts";
 import * as monaco from "monaco-editor";
 import Instructions from "./Instructions.tsx";
-import { getModuleBySlug } from "../lib/apiClient.ts";
+import { getModuleBySlug, saveFiles } from "../lib/apiClient.ts";
 import type { FileResponse } from "../../../shared-types.ts";
-import { saveFiles } from "../lib/apiClient.ts";
 
 export default function Main() {
   const params = useParams();
@@ -121,7 +120,7 @@ export default function Main() {
     }
   };
 
-  const handleSaveFiles = async () => {
+  const handleSave = async () => {
     try {
       await saveFiles(
         files().map((f) => ({ id: f.id, name: f.name, content: f.content })),
@@ -129,6 +128,18 @@ export default function Main() {
       console.log("Files saved successfully");
     } catch (err) {
       console.error("Failed to save files:", err);
+    }
+  };
+
+  const handleUndo = () => {
+    if (codeEditor) {
+      codeEditor.trigger("", "undo", {});
+    }
+  };
+
+  const handleRedo = () => {
+    if (codeEditor) {
+      codeEditor.trigger("", "redo", {});
     }
   };
 
@@ -155,7 +166,9 @@ export default function Main() {
                 <div class="h-full flex flex-col">
                   <CommandBar
                     onRun={handleRunCode}
-                    onSave={handleSaveFiles}
+                    onSave={handleSave}
+                    onUndo={handleUndo}
+                    onRedo={handleRedo}
                     onInterrupt={sendInterrupt}
                     isExecuting={isExecuting()}
                     files={files()}
