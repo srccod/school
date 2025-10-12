@@ -34,3 +34,21 @@ export async function getModuleBySlug(slug: string): Promise<ModuleResponse> {
   const data = await response.json();
   return data;
 }
+
+export async function saveFiles(
+  files: { id: string; name: string; content: string }[]
+) {
+  const response = await fetchWithAuth(`/modules/files`, {
+    method: "POST",
+    body: JSON.stringify({ files }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to save files: ${response.statusText}`);
+  }
+  const data = await response.json();
+  console.log("Save files response:", data);
+  return data;
+}
