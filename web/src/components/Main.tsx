@@ -1,24 +1,28 @@
 import { useParams } from "@solidjs/router";
-import { createEffect, createSignal, onMount } from "solid-js";
-import { type CodeMod, codeMods } from "../lib/modules_temp.ts";
+import {
+  createEffect,
+  createResource,
+  createSignal,
+  onCleanup,
+  onMount,
+  Show,
+} from "solid-js";
 import CommandBar from "./CommandBar.tsx";
 import Editor from "./Editor.tsx";
 import { Resizable, ResizableHandle, ResizablePanel } from "./ui/resizable.tsx";
 import { usePyodide } from "../hooks/usePyodide.ts";
-import { SolidMarkdown } from "solid-markdown";
 import * as monaco from "monaco-editor";
+import Instructions from "./Instructions.tsx";
+import { getModuleBySlug, saveFiles } from "../lib/apiClient.ts";
+import type { FileResponse } from "../../../shared-types.ts";
 
 export default function Main() {
   const params = useParams();
-  const [module, setModule] = createSignal<CodeMod | null>(null);
-  const [files, setFiles] = createSignal<{ name: string; content: string }[]>(
-    [],
-  );
+  const [files, setFiles] = createSignal<FileResponse[]>([]);
   const [activeFile, setActiveFile] = createSignal("");
 
   let codeEditor: monaco.editor.IStandaloneCodeEditor | undefined;
   let outputEditor: monaco.editor.IStandaloneCodeEditor | undefined;
-  let inputStartColumn = 0;
 
   const {
     isPyodideLoading,
@@ -28,6 +32,7 @@ export default function Main() {
     isAwaitingInput,
     sendInput,
     executePython,
+    sendInterrupt,
   } = usePyodide();
 
   // auto-scroll output editor to bottom on new output or input prompt
@@ -50,16 +55,21 @@ export default function Main() {
       }
     }
   });
-
-  // track when input is requested & set cursor position
+  // focus output editor when waiting for input
   createEffect(() => {
-    if (isAwaitingInput()) {
-      if (outputEditor) {
-        const model = outputEditor.getModel();
-        if (model) {
-          const lineCount = model.getLineCount();
-          inputStartColumn = model.getLineContent(lineCount).length + 1;
-        }
+    const isReadOnly = !isAwaitingInput();
+    if (!outputEditor) return;
+
+    outputEditor.updateOptions({ readOnly: isReadOnly });
+    if (!isReadOnly) {
+      outputEditor.focus();
+    }
+    const domNode = outputEditor.getDomNode();
+    if (domNode) {
+      if (isReadOnly) {
+        domNode.classList.add("editor-readonly");
+      } else {
+        domNode.classList.remove("editor-readonly");
       }
     }
   });
@@ -75,21 +85,36 @@ export default function Main() {
     return currentIsExecuting;
   }, isExecuting());
 
-  onMount(() => {
-    const slug = params.slug;
-
-    if (slug) {
-      const currentModule = codeMods[slug];
-      if (currentModule) {
-        setModule(currentModule);
-        setFiles(currentModule.files);
-        setActiveFile(currentModule.files[0].name);
-      }
-    } else {
-      setFiles(codeMods["getting-started"].files);
-      setActiveFile(codeMods["getting-started"].files[0].name);
+  // set active file to entrypoint or first file when module loads
+  createEffect(() => {
+    const mod = module();
+    if (mod && mod.files && mod.files.length > 0) {
+      const entrypoint = mod.files.find((f) => f.isEntryPoint)?.name ||
+        mod.files[0].name;
+      setActiveFile(entrypoint);
     }
   });
+
+  // source for the resource: the slug from params
+  const moduleSlug = () => params.slug || "getting-started"; // Default to 'getting-started' if no slug
+
+  // Fetcher function for the module
+  const fetchModule = async (slug: string) => {
+    if (!slug) return null; // Handle cases where slug might be empty
+    try {
+      const module = await getModuleBySlug(slug);
+      setFiles(module.files || []);
+      return module;
+    } catch (err) {
+      console.error("Failed to fetch module:", err);
+      throw err; // Re-throw to let createResource handle the error state
+    }
+  };
+
+  const [moduleData] = createResource(moduleSlug, fetchModule);
+
+  // Derived signals for files and module (from moduleData)
+  const module = () => moduleData();
 
   const handleRunCode = async () => {
     if (isPyodideLoading() || isExecuting()) {
@@ -102,120 +127,147 @@ export default function Main() {
     }
   };
 
+  const handleSave = async () => {
+    try {
+      await saveFiles(
+        files().map((f) => ({ id: f.id, name: f.name, content: f.content })),
+      );
+      console.log("Files saved successfully");
+    } catch (err) {
+      console.error("Failed to save files:", err);
+    }
+  };
+
+  const handleUndo = () => {
+    if (codeEditor) {
+      codeEditor.trigger("", "undo", {});
+    }
+  };
+
+  const handleRedo = () => {
+    if (codeEditor) {
+      codeEditor.trigger("", "redo", {});
+    }
+  };
+
+  onMount(() => {
+    const interval = setInterval(() => {
+      handleSave();
+    }, 10000); // auto-save every 10 seconds
+    onCleanup(() => {
+      clearInterval(interval);
+    });
+  });
+
   const activeFileContent = () =>
     files().find((f) => f.name === activeFile())?.content ?? "";
 
   return (
-    <Resizable class="">
-      <ResizablePanel initialSize={0.35} class="overflow-hidden">
-        <div class="prose dark:prose-invert h-full p-6">
-          <SolidMarkdown class="prose dark:prose-invert h-full p-6">
-            {module()?.instructions || ""}
-          </SolidMarkdown>
-        </div>
-      </ResizablePanel>
-      <ResizableHandle />
-      <ResizablePanel initialSize={0.65} class="overflow-hidden">
-        <Resizable orientation="vertical">
-          <ResizablePanel initialSize={0.5} class="overflow-hidden">
-            <div class="h-full flex flex-col">
-              <CommandBar
-                onRun={handleRunCode}
-                files={files()}
-                activeFile={activeFile()}
-                setActiveFile={setActiveFile}
-              />
-              <div class="flex-1 overflow-hidden">
-                <Editor
-                  controlled
-                  value={activeFileContent()}
-                  language="python"
-                  theme="vs-dark"
-                  uri={activeFile()}
-                  onChange={(value) => {
-                    const newFiles = files().map((f) =>
-                      f.name === activeFile() ? { ...f, content: value } : f
-                    );
-                    setFiles(newFiles);
-                  }}
-                  onMount={(editor, _monaco) => {
-                    codeEditor = editor;
-                    editor.addAction({
-                      id: "run-code",
-                      label: "Run Code",
-                      keybindings: [],
-                      run: () => {
-                        handleRunCode();
-                      },
-                    });
-                    console.log("code editor mounted");
-                  }}
-                  options={{
-                    fontSize: 14,
-                    minimap: { enabled: false },
-                    scrollBeyondLastLine: false,
-                  }}
-                />
-              </div>
-            </div>
+    <>
+      <Show when={moduleData.loading}>
+        <div>Loading module...</div>
+      </Show>
+      <Show when={moduleData.error}>
+        <div class="text-red-500">Error: {moduleData.error.message}</div>
+      </Show>
+      <Show when={!moduleData.loading && !moduleData.error && module()}>
+        <Resizable class="">
+          <ResizablePanel initialSize={0.35} class="overflow-hidden">
+            <Instructions module={module()} />
           </ResizablePanel>
           <ResizableHandle />
-          <ResizablePanel initialSize={0.5} class="overflow-hidden">
-            <div class="h-full flex flex-col">
-              <div class="flex-1 overflow-hidden">
-                <Editor
-                  controlled
-                  value={pyodideStream()}
-                  language="plaintext"
-                  theme="vs-dark"
-                  uri="output"
-                  onMount={(editor, _monaco) => {
-                    outputEditor = editor;
-                    createEffect(() => {
-                      const isReadOnly = !isAwaitingInput();
-                      editor.updateOptions({ readOnly: isReadOnly });
-                      if (!isReadOnly) {
-                        editor.focus();
-                      }
-                      const domNode = editor.getDomNode();
-                      if (domNode) {
-                        if (isReadOnly) {
-                          domNode.classList.add("editor-readonly");
-                        } else {
-                          domNode.classList.remove("editor-readonly");
-                        }
-                      }
-                    });
-                    editor.onKeyDown((e) => {
-                      if (isAwaitingInput() && e.code === "Enter") {
-                        e.preventDefault();
-                        const model = editor.getModel();
-                        if (model) {
-                          const lineCount = model.getLineCount();
-                          const currentLine = model.getLineContent(lineCount);
-                          const input = currentLine.substring(
-                            inputStartColumn - 1,
-                          );
-                          sendInput(input);
-                          setPyodideStream((prev) => prev + input + "\n");
-                        }
-                      }
-                    });
-                    console.log("output editor mounted");
-                  }}
-                  options={{
-                    fontSize: 14,
-                    lineNumbers: "off",
-                    minimap: { enabled: false },
-                    renderLineHighlight: "none",
-                    scrollBeyondLastLine: false,
-                  }}
-                />
-              </div>
-            </div>
+          <ResizablePanel initialSize={0.65} class="overflow-hidden">
+            <Resizable orientation="vertical">
+              <ResizablePanel initialSize={0.5} class="overflow-hidden">
+                <div class="h-full flex flex-col">
+                  <CommandBar
+                    onRun={handleRunCode}
+                    onSave={handleSave}
+                    onUndo={handleUndo}
+                    onRedo={handleRedo}
+                    onInterrupt={sendInterrupt}
+                    isExecuting={isExecuting()}
+                    files={files()}
+                    activeFile={activeFile()}
+                    setActiveFile={setActiveFile}
+                  />
+                  <div class="flex-1 overflow-hidden">
+                    <Editor
+                      controlled
+                      value={activeFileContent()}
+                      language="python"
+                      theme="vs-dark"
+                      uri={activeFile()}
+                      onChange={(value) => {
+                        const newFiles = files().map((f) =>
+                          f.name === activeFile() ? { ...f, content: value } : f
+                        );
+                        setFiles(newFiles);
+                      }}
+                      onMount={(editor, _monaco) => {
+                        codeEditor = editor;
+                        editor.addAction({
+                          id: "run-code",
+                          label: "Run Code",
+                          keybindings: [],
+                          run: () => {
+                            handleRunCode();
+                          },
+                        });
+                        console.log("code editor mounted");
+                      }}
+                      options={{
+                        fontSize: 14,
+                        minimap: { enabled: false },
+                        scrollBeyondLastLine: false,
+                      }}
+                    />
+                  </div>
+                </div>
+              </ResizablePanel>
+              <ResizableHandle />
+              <ResizablePanel initialSize={0.5} class="overflow-hidden">
+                <div class="h-full flex flex-col">
+                  <div class="flex-1 overflow-hidden">
+                    <Editor
+                      controlled
+                      value={pyodideStream()}
+                      language="plaintext"
+                      theme="vs-dark"
+                      uri="output"
+                      onMount={(editor, _monaco) => {
+                        outputEditor = editor;
+                        editor.onKeyDown((e) => {
+                          if (isAwaitingInput() && e.code === "Enter") {
+                            e.preventDefault();
+                            const model = editor.getModel();
+                            if (model) {
+                              const currentValue = model.getValue();
+                              const input = currentValue.substring(
+                                pyodideStream().length,
+                              );
+                              sendInput(input);
+                              setPyodideStream((prev) => prev + input + "\n");
+                            }
+                          }
+                        });
+                        console.log("output editor mounted");
+                      }}
+                      options={{
+                        fontSize: 14,
+                        lineNumbers: "off",
+                        minimap: { enabled: false },
+                        renderLineHighlight: "none",
+                        scrollBeyondLastLine: false,
+                      }}
+                    />
+                  </div>
+                </div>
+              </ResizablePanel>
+            </Resizable>
           </ResizablePanel>
         </Resizable>
-      </ResizablePanel>
-    </Resizable>
+      </Show>
+    </>
   );
 }

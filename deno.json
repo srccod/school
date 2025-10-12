@@ -39,14 +39,8 @@
   "nodeModulesDir": "auto",
 
   "tasks": {
-    "auth:generate": {
-      "command": "deno run --allow-env --allow-read --allow-write --allow-net npm:@better-auth/cli@latest generate"
-    },
-    "auth:migrate": {
-      "command": "deno run --allow-env --allow-read --allow-write --allow-net npm:@better-auth/cli@latest migrate"
-    },
     "api": {
-      "command": "deno run --allow-env --allow-net --allow-read --watch --env-file ./server/src/server.ts"
+      "command": "deno run --allow-env --allow-net --allow-read --watch --env-file=.env ./server/src/server.ts"
     },
     "build": {
       "command": "vite build"
@@ -58,6 +52,12 @@
       "command": "vite preview",
       "dependencies": ["build"]
     },
+    "db:migrate": {
+      "command": "deno run --allow-env --allow-net --allow-read --allow-sys --env-file=.env server/src/db/migrate.ts"
+    },
+    "db:seed": {
+      "command": "deno run --allow-env --allow-net --allow-read --allow-sys --env-file=.env server/src/db/seed-tmp.ts"
+    },
     "db:up": {
       "command": "docker compose -f docker-compose.database.yml up"
     },
@@ -65,10 +65,10 @@
       "command": "docker compose -f docker-compose.database.yml down"
     },
     "db:restart": {
-      "command": "docker compose -f docker-compose.database.yml --env-file restart"
+      "command": "docker compose -f docker-compose.database.yml --env-file=.env restart"
     },
     "db:logs": {
-      "command": "docker compose -f docker-compose.database.yml --env-file logs -f postgres"
+      "command": "docker compose -f docker-compose.database.yml --env-file=.env logs -f postgres"
     }
   }
 }

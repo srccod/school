@@ -6,16 +6,29 @@ let pyodide: PyodideInterface | null = null;
 let sharedMem: SharedArrayBuffer | null = null;
 let control: Int32Array | null = null;
 let dataView: Uint8Array | null = null;
+let outputMem: SharedArrayBuffer | null = null;
+let outputControl: Int32Array | null = null;
+let outputDataView: Uint8Array | null = null;
 const CONTROL_BYTE_LENGTH = 8;
+const OUTPUT_CONTROL_BYTE_LENGTH = 12;
 const textDecoder = new TextDecoder();
 
-function initSharedMem(sab: SharedArrayBuffer) {
-  sharedMem = sab;
-  control = new Int32Array(sab, 0, 2);
-  dataView = new Uint8Array(sab, CONTROL_BYTE_LENGTH);
+function initSharedMem(inputSab: SharedArrayBuffer, outSab: SharedArrayBuffer) {
+  sharedMem = inputSab;
+  control = new Int32Array(inputSab, 0, 2);
+  dataView = new Uint8Array(inputSab, CONTROL_BYTE_LENGTH);
+
+  outputMem = outSab;
+  outputControl = new Int32Array(outSab, 0, 3);
+  outputDataView = new Uint8Array(outSab, OUTPUT_CONTROL_BYTE_LENGTH);
+  outputDataView.fill(0);
 
   Atomics.store(control, 0, 0); // flag = 0
   Atomics.store(control, 1, 0); // length = 0
+
+  Atomics.store(outputControl, 0, 0); // flag = 0
+  Atomics.store(outputControl, 1, 0); // length = 0
+  Atomics.store(outputControl, 2, 0); // position = 0
 }
 
 function stdinSync() {
@@ -65,7 +78,27 @@ function stdinSync() {
 
 function write(buffer: Uint8Array): number {
   const chunk = textDecoder.decode(buffer, { stream: true });
-  self.postMessage({ type: "stream-output", output: chunk });
+  // append to shared output buffer
+  if (outputMem && outputControl && outputDataView) {
+    const bytes = new TextEncoder().encode(chunk);
+    let pos = Atomics.load(outputControl, 2);
+    if (pos + bytes.length > outputDataView.byteLength) {
+      // buffer full, reset it
+      console.warn("Output buffer overflow, resetting buffer.");
+      outputDataView.fill(0);
+      Atomics.store(outputControl, 2, 0);
+      pos = 0;
+      if (bytes.length > outputDataView.byteLength) {
+        console.warn("Output chunk too large for buffer, skipping.");
+        return buffer.length;
+      }
+    }
+    outputDataView.set(bytes, pos);
+    const newPos = pos + bytes.length;
+    Atomics.store(outputControl, 2, newPos);
+    Atomics.store(outputControl, 1, newPos); // update length
+    Atomics.store(outputControl, 0, 1); // flag = 1
+  }
   return buffer.length;
 }
 
@@ -88,10 +121,11 @@ self.onmessage = async (event: MessageEvent) => {
   if (type === "init") {
     try {
       if (!pyodide) {
-        initSharedMem(payload);
+        initSharedMem(payload.inputSab, payload.outputSab);
         pyodide = await loadPyodide({
           indexURL: "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/",
         });
+        pyodide.setInterruptBuffer(new Uint8Array(payload.interruptSab));
         pyodide.setStdin({ stdin: () => stdinSync(), isatty: false });
         setupOutputCapture();
         console.log("Pyodide initialized in worker.");
@@ -122,6 +156,18 @@ self.onmessage = async (event: MessageEvent) => {
     const { files, entrypoint } = payload;
     for (const file of files) {
       pyodide.FS.writeFile(file.name, file.content);
+    }
+    // clear module cache for all files to ensure changes are reflected
+    for (const file of files) {
+      const moduleName = file.name.replace(/\.py$/, "");
+      pyodide.runPython(`import sys; sys.modules.pop('${moduleName}', None)`);
+    }
+    // Reset output buffer for new execution
+    if (outputControl && outputDataView) {
+      Atomics.store(outputControl, 0, 0);
+      Atomics.store(outputControl, 1, 0);
+      Atomics.store(outputControl, 2, 0);
+      outputDataView.fill(0);
     }
     setupOutputCapture();
 

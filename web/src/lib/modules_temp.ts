@@ -1,6 +1,6 @@
 export type CodeMod = {
   files: { id: string; name: string; content: string }[];
-  instructions: string;
+  instructions: string[];
 };
 
 const calculator = `
@@ -26,7 +26,8 @@ export const codeMods: Record<string, CodeMod> = {
         content: calculator,
       },
     ],
-    instructions: `# Calculator
+    instructions: [
+      `# Calculator
       
       This module provides basic arithmetic functions: 
         - addition
@@ -34,6 +35,7 @@ export const codeMods: Record<string, CodeMod> = {
         - multiplication
         - division
       `,
+    ],
   },
   "hello-world": {
     files: [
@@ -48,7 +50,7 @@ export const codeMods: Record<string, CodeMod> = {
         content: `def say_hello(name):\n   print(f"Hello, {name}!")`,
       },
     ],
-    instructions: "This is a simple hello world program.",
+    instructions: ["This is a simple hello world program."],
   },
   "interactive-input": {
     files: [
@@ -58,8 +60,10 @@ export const codeMods: Record<string, CodeMod> = {
         content: `name = input("Enter your name: ")\nprint(f"Hello, {name}!")`,
       },
     ],
-    instructions:
+    instructions: [
       "This program prompts the user for their name and then greets them.",
+      "Here's a second panel",
+    ],
   },
   "getting-started": {
     files: [
@@ -69,7 +73,8 @@ export const codeMods: Record<string, CodeMod> = {
         content: `print("Welcome to the Python coding environment!")\n\n# Try modifying this print statement and run the code.`,
       },
     ],
-    instructions:
+    instructions: [
       "This is a simple Python coding environment. You can write and execute Python code here. Try modifying the existing code or adding new code to get started!",
+    ],
   },
 };
