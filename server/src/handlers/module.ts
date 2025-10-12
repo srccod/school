@@ -72,4 +72,33 @@ app.get("/:slug", async (c) => {
   return c.json(payload);
 });
 
+app.post("/files", async (c) => {
+  const user = c.get("user");
+
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const { files } = (await c.req.json()) as {
+    files: { id: string; name: string; content: string }[];
+  };
+
+  for (const file of files) {
+    await db
+      .insert(schema.userFiles)
+      .values({
+        userId: user.id,
+        fileId: file.id,
+        name: file.name,
+        content: file.content,
+      })
+      .onConflictDoUpdate({
+        target: [schema.userFiles.userId, schema.userFiles.fileId],
+        set: { name: file.name, content: file.content },
+      });
+  }
+
+  return c.json({ success: true });
+});
+
 export const moduleHandler = app;
