@@ -65,27 +65,29 @@ export function usePyodide() {
   let sharedMem: SharedArrayBuffer | undefined;
   let outputMem: SharedArrayBuffer | undefined;
   let outputInterval: number | undefined;
+  let lastReadPos = 0;
 
   /**
    * Read output from the shared memory buffer for stdout/stderr.
-   * @param sab The SharedArrayBuffer for outpunsputt
+   * @param sab The SharedArrayBuffer for output
    * @returns The string read, or null if no data
    */
   function readOutput(sab: SharedArrayBuffer): string | null {
-    const control = new Int32Array(sab, 0, 2);
-    const dataView = new Uint8Array(sab, CONTROL_BYTE_LENGTH);
+    const control = new Int32Array(sab, 0, 3);
+    const dataView = new Uint8Array(sab, 12);
 
     const flag = Atomics.load(control, 0);
     if (flag === 1) {
       const len = Atomics.load(control, 1);
-      const bytes = new Uint8Array(len);
-      bytes.set(dataView.subarray(0, len));
-      const s = textDecoder.decode(bytes);
-
-      // Reset flag to 0
-      Atomics.store(control, 0, 0);
-      Atomics.store(control, 1, 0);
-      return s;
+      if (len > lastReadPos) {
+        const bytes = new Uint8Array(len - lastReadPos);
+        bytes.set(dataView.subarray(lastReadPos, len));
+        const s = textDecoder.decode(bytes);
+        lastReadPos = len;
+        // Reset flag to 0
+        Atomics.store(control, 0, 0);
+        return s;
+      }
     }
     return null;
   }
@@ -175,7 +177,7 @@ export function usePyodide() {
           setPyodideStream((prev) => prev + out);
         }
       }
-    }, 10); // Poll every 10ms
+    }, 5); // Poll every 10ms
 
     return new Promise((resolve, reject) => {
       pendingPromises.set(initId, { resolve, reject });
@@ -203,6 +205,7 @@ export function usePyodide() {
     setIsExecuting(true);
     setPyodideStream("");
     setPyodideError(null);
+    lastReadPos = 0;
 
     const id = generateID();
 
