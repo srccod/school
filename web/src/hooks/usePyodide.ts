@@ -1,6 +1,7 @@
 import { createSignal, onCleanup, onMount } from "solid-js";
 import { generateID } from "../lib/generateID.ts";
 
+// @ts-ignore: Vite worker import
 import PyodideWorker from "../workers/pyodide.worker.ts?worker";
 
 type WorkerMessage = {
@@ -111,7 +112,7 @@ export function usePyodide() {
     interruptBuffer = new Uint8Array(interruptSab);
 
     worker.onmessage = (event: MessageEvent<WorkerMessage>) => {
-      const { id, type, output, error } = event.data;
+      const { id, type, error } = event.data;
 
       if (type === "init-success") {
         setIsPyodideLoading(false);
@@ -218,7 +219,10 @@ export function usePyodide() {
     const id = generateID();
 
     return new Promise<void>((resolve, reject) => {
-      pendingPromises.set(id, { resolve, reject });
+      pendingPromises.set(id, {
+        resolve: resolve as (value?: unknown) => void,
+        reject: reject as (reason?: unknown) => void,
+      });
 
       worker!.postMessage({
         id,
