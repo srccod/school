@@ -1,9 +1,10 @@
 import { For, Show } from "solid-js";
 import { Button } from "./ui/Button.tsx";
-import { RunIcon, StopIcon } from "./icons.tsx";
+import { RunIcon, SaveIcon, StopIcon } from "./icons.tsx";
 
 type CommandBarProps = {
   onRun: () => void;
+  onSave?: () => void;
   onInterrupt?: () => void;
   isExecuting?: boolean;
   files: { name: string; content: string }[];
@@ -27,7 +28,17 @@ export default function CommandBar(props: CommandBarProps) {
           )}
         </For>
       </div>
-      <ul>
+      <ul class="flex gap-2">
+        <li>
+          <Show
+            when={props.onSave}
+            fallback={<div />}
+          >
+            <Button onclick={props.onSave} variant="ghost" size="sm">
+              <SaveIcon class="" />
+            </Button>
+          </Show>
+        </li>
         <li>
           <Show
             when={props.isExecuting}

@@ -8,6 +8,7 @@ import * as monaco from "monaco-editor";
 import Instructions from "./Instructions.tsx";
 import { getModuleBySlug } from "../lib/apiClient.ts";
 import type { FileResponse } from "../../../shared-types.ts";
+import { saveFiles } from "../lib/apiClient.ts";
 
 export default function Main() {
   const params = useParams();
@@ -48,6 +49,24 @@ export default function Main() {
       }
     }
   });
+  // focus output editor when waiting for input
+  createEffect(() => {
+    const isReadOnly = !isAwaitingInput();
+    if (!outputEditor) return;
+
+    outputEditor.updateOptions({ readOnly: isReadOnly });
+    if (!isReadOnly) {
+      outputEditor.focus();
+    }
+    const domNode = outputEditor.getDomNode();
+    if (domNode) {
+      if (isReadOnly) {
+        domNode.classList.add("editor-readonly");
+      } else {
+        domNode.classList.remove("editor-readonly");
+      }
+    }
+  });
 
   // refocus code editor when execution completes
   createEffect((prevIsExecuting) => {
@@ -70,7 +89,7 @@ export default function Main() {
     }
   });
 
-  // Source for the resource: the slug from params
+  // source for the resource: the slug from params
   const moduleSlug = () => params.slug || "getting-started"; // Default to 'getting-started' if no slug
 
   // Fetcher function for the module
@@ -102,6 +121,17 @@ export default function Main() {
     }
   };
 
+  const handleSaveFiles = async () => {
+    try {
+      await saveFiles(
+        files().map((f) => ({ id: f.id, name: f.name, content: f.content })),
+      );
+      console.log("Files saved successfully");
+    } catch (err) {
+      console.error("Failed to save files:", err);
+    }
+  };
+
   const activeFileContent = () =>
     files().find((f) => f.name === activeFile())?.content ?? "";
 
@@ -125,6 +155,7 @@ export default function Main() {
                 <div class="h-full flex flex-col">
                   <CommandBar
                     onRun={handleRunCode}
+                    onSave={handleSaveFiles}
                     onInterrupt={sendInterrupt}
                     isExecuting={isExecuting()}
                     files={files()}
@@ -177,21 +208,6 @@ export default function Main() {
                       uri="output"
                       onMount={(editor, _monaco) => {
                         outputEditor = editor;
-                        createEffect(() => {
-                          const isReadOnly = !isAwaitingInput();
-                          editor.updateOptions({ readOnly: isReadOnly });
-                          if (!isReadOnly) {
-                            editor.focus();
-                          }
-                          const domNode = editor.getDomNode();
-                          if (domNode) {
-                            if (isReadOnly) {
-                              domNode.classList.add("editor-readonly");
-                            } else {
-                              domNode.classList.remove("editor-readonly");
-                            }
-                          }
-                        });
                         editor.onKeyDown((e) => {
                           if (isAwaitingInput() && e.code === "Enter") {
                             e.preventDefault();
