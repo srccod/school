@@ -3,5 +3,5 @@ import { adminClient, usernameClient } from "better-auth/client/plugins";
 
 export const authClient = createAuthClient({
   plugins: [adminClient(), usernameClient()],
-  baseURL: "http://localhost:3001",
+  baseUrl: globalThis.location.origin,
 });

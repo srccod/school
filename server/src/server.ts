@@ -10,7 +10,12 @@ app.use(logger());
 app.use(
   "/api/*",
   cors({
-    origin: "http://localhost:3000",
+    origin: [
+      "https://localhost:4433",
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "https://srccod.northridge.dev",
+    ],
     allowHeaders: ["Content-Type", "Authorization"],
     allowMethods: ["POST", "GET", "OPTIONS"],
     exposeHeaders: ["Content-Length"],

@@ -1,6 +1,6 @@
-import type { ModuleResponse } from "../../../shared-types.ts";
+import type { ModuleResponse } from "../../../server/src/shared-types.ts";
 
-const API_BASE_URL = "http://localhost:3001/api";
+const API_BASE_URL = "/api";
 
 /**
  * Fetch wrapper that includes authentication headers
@@ -49,6 +49,5 @@ export async function saveFiles(
     throw new Error(`Failed to save files: ${response.statusText}`);
   }
   const data = await response.json();
-  console.log("Save files response:", data);
   return data;
 }

@@ -29,5 +29,9 @@ export const auth = betterAuth({
       maxAge: 5 * 60,
     },
   },
-  trustedOrigins: ["http://localhost:3000"],
+  trustedOrigins: [
+    "http://localhost:3000",
+    "https://localhost:4433",
+    "https://srccod.northridge.dev",
+  ],
 });
