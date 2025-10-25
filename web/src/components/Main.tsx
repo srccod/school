@@ -14,7 +14,7 @@ import { usePyodide } from "../hooks/usePyodide.ts";
 import * as monaco from "monaco-editor";
 import Instructions from "./Instructions.tsx";
 import { getModuleBySlug, saveFiles } from "../lib/apiClient.ts";
-import type { FileResponse } from "../../../shared-types.ts";
+import type { FileResponse } from "../../../server/src/shared-types.ts";
 
 export default function Main() {
   const params = useParams();
@@ -55,6 +55,7 @@ export default function Main() {
       }
     }
   });
+
   // focus output editor when waiting for input
   createEffect(() => {
     const isReadOnly = !isAwaitingInput();
@@ -153,7 +154,7 @@ export default function Main() {
   onMount(() => {
     const interval = setInterval(() => {
       handleSave();
-    }, 10000); // auto-save every 10 seconds
+    }, 30000); // auto-save every 30 seconds
     onCleanup(() => {
       clearInterval(interval);
     });
