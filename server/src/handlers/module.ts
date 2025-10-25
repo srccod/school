@@ -26,17 +26,9 @@ app.use("*", async (c, next) => {
   return next();
 });
 
-app.get("/", async (c) => {
-  const allModules = await db.select().from(schema.modules);
-  const allFiles = await db.select().from(schema.starterFiles);
-  return c.json({ allModules, allFiles });
-});
-
 app.get("/:slug", async (c) => {
   const slug = c.req.param("slug");
   const user = c.get("user");
-
-  console.log("requesting user:", user);
 
   const [module] = await db
     .select()
