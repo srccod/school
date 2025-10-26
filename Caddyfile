@@ -1,10 +1,17 @@
-yourdomain.com {
-    # Serve the static frontend files from this directory
-    root * /usr/share/caddy
-    file_server
+:80 {
+	header {
+		Cross-Origin-Opener-Policy same-origin
+		Cross-Origin-Embedder-Policy require-corp
+	}
 
-    # Reverse proxy API requests to the backend service
-    handle_path /api/* {
-        reverse_proxy backend:3001
-    }
+	@api path /api/*
+	handle @api {
+		reverse_proxy backend:3001
+	}
+
+	handle {
+		root * /usr/share/caddy
+		try_files {path} {path}/ /index.html
+		file_server
+	}
 }

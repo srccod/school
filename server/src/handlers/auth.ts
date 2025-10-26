@@ -31,7 +31,7 @@ export const auth = betterAuth({
   },
   trustedOrigins: [
     "http://localhost:3000",
-    "https://localhost:4433",
+    "https://localhost:3001",
     "https://srccod.northridge.dev",
   ],
 });
