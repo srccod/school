@@ -12,10 +12,6 @@ USER deno
 
 RUN deno cache --node-modules-dir=auto server/src/server.ts
 
-# Create a starter _journal.json if it doesn't exist
-RUN mkdir -p server/src/db/migrations/meta && \
-    echo '{"version":"1","dialect":"pg","entries":[]}' > server/src/db/migrations/meta/_journal.json
-
 EXPOSE 3001
 
 CMD ["run", "--allow-net", "--allow-read", "--allow-env", "server/src/server.ts"]
