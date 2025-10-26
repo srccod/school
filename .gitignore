@@ -15,9 +15,6 @@ mise.toml
 # dependencies
 /node_modules
 
-# database
-**/migrations/meta/
-
 # IDEs and editors
 /.idea
 .project

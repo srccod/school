@@ -20,12 +20,6 @@ Thumbs.db
 # Environment files (don't include secrets in images)
 .env
 
-# Drizzle migration snapshots / metadata we don't want copied into images
-server/src/db/migrations/meta/
-server/src/db/migrations/**/meta/
-server/src/db/migrations/*_journal.json
-server/src/db/migrations/*_snapshot.json
-
 # Temporary/dev artifacts
 .cache
 coverage
