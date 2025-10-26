@@ -1,3 +1,4 @@
+import { dirname, fromFileUrl, join } from "@std/path";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
@@ -10,9 +11,15 @@ console.log("Connecting to database...");
 const sql = postgres(connectionString, { max: 1 });
 const db = drizzle(sql);
 
-console.log("Running migrations...");
+const __dirname = dirname(fromFileUrl(import.meta.url));
+const migrationsFolder = join(__dirname, "migrations");
 
-await migrate(db, { migrationsFolder: "server/src/db/migrations" });
+console.log(`Running migrations in ${migrationsFolder}...`);
+for await (const dirEntry of Deno.readDir(migrationsFolder)) {
+  console.log(" -", dirEntry.name);
+}
+
+await migrate(db, { migrationsFolder });
 
 console.log("Migrations completed.");
 
