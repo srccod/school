@@ -2,14 +2,20 @@ FROM denoland/deno:2.5.2
 
 WORKDIR /app
 
-# The port that your application listens on.
+COPY ./server/src/ ./server/src/
+
+COPY deno.json deno.lock drizzle.config.ts /app/
+
+RUN chown -R deno:deno /app
+
+USER deno
+
+RUN deno cache --node-modules-dir=auto server/src/server.ts
+
+# Create a starter _journal.json if it doesn't exist
+RUN mkdir -p server/src/db/migrations/meta && \
+    echo '{"version":"1","dialect":"pg","entries":[]}' > server/src/db/migrations/meta/_journal.json
+
 EXPOSE 3001
 
-# Prefer to cache dependencies before adding the rest of the code.
-# This will leverage Docker's layer caching.
-COPY server/src/ /app/server/src/
-RUN deno cache server/src/server.ts
-
-# Command to run your application.
-# Adjust permissions as needed.
 CMD ["run", "--allow-net", "--allow-read", "--allow-env", "server/src/server.ts"]
