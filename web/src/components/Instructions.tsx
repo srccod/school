@@ -2,7 +2,7 @@ import { createEffect, createSignal, Show } from "solid-js";
 import { SolidMarkdown } from "solid-markdown";
 import { Button } from "./ui/Button.tsx";
 import { ChevronLeftIcon, ChevronRightIcon } from "./icons.tsx";
-import type { ModuleResponse } from "../../../shared-types.ts";
+import type { ModuleResponse } from "../../../server/src/shared-types.ts";
 
 export default function Instructions(
   props: { module: ModuleResponse | null | undefined },

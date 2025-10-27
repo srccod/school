@@ -97,7 +97,7 @@ export default function Main() {
   });
 
   // source for the resource: the slug from params
-  const moduleSlug = () => params.slug || "getting-started"; // Default to 'getting-started' if no slug
+  const moduleSlug = () => params.slug || "default";
 
   // Fetcher function for the module
   const fetchModule = async (slug: string) => {

@@ -57,7 +57,7 @@
       "command": "deno run --allow-env --allow-net --allow-read --allow-sys --env-file=.env server/src/db/migrate.ts"
     },
     "db:seed": {
-      "command": "deno run --allow-env --allow-net --allow-read --allow-sys --env-file=.env server/src/db/seed-tmp.ts"
+      "command": "deno run --allow-env --allow-net --allow-read --allow-sys --env-file=.env server/src/db/seed/001-default.ts"
     },
     "db:up": {
       "command": "docker compose -f docker-compose.database.yml up"
