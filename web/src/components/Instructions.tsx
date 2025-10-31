@@ -1,5 +1,6 @@
 import { createEffect, createSignal, Show } from "solid-js";
 import { SolidMarkdown } from "solid-markdown";
+import "../styles/markdown.css";
 import { Button } from "./ui/Button.tsx";
 import { ChevronLeftIcon, ChevronRightIcon } from "./icons.tsx";
 import type { ModuleResponse } from "../../../server/src/shared-types.ts";
@@ -22,7 +23,7 @@ export default function Instructions(
   return (
     <div class="prose dark:prose-invert h-full p-6 flex flex-col">
       <div class="flex-1 overflow-y-auto">
-        <SolidMarkdown class="prose dark:prose-invert">
+        <SolidMarkdown class="prose dark:prose-invert markdown">
           {currentInstruction()?.text || ""}
         </SolidMarkdown>
       </div>
