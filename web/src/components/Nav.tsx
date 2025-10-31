@@ -2,6 +2,7 @@ import { Show } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { useUser } from "../stores/user.tsx";
 import { Button } from "./ui/Button.tsx";
+import logo from "../../assets/srccod-logo-sm.webp";
 
 export default function Nav() {
   const { user, logout } = useUser();
@@ -10,7 +11,7 @@ export default function Nav() {
   return (
     <div class="flex justify-between items-center p-3">
       <div class="flex flex-col items-center gap-1">
-        <span class="text-2xl font-bold">source cod</span>
+        <img src={logo} alt="srccod Logo" class="h-12" />
       </div>
       <div>
         <Show when={user.isLoggedIn}>
