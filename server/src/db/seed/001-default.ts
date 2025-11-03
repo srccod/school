@@ -1,4 +1,5 @@
 import { db } from "../connection.ts";
+import { eq } from "drizzle-orm";
 import {
   modules,
   moduleToFile,
@@ -9,66 +10,117 @@ const factorFinderText = `- A number's factors are all the (positive whole) numb
 - Write a function that takes one parameter (a positive whole number) and returns a list of all its factors.
 - Can you find a number with more than 10 factors? 20?? 30?!`;
 
-console.log("Seeding database...");
-const modulesInsert = await db
-  .insert(modules)
-  .values([
-    {
-      slug: "default",
-      name: "Default",
-      instructions: [
-        {
-          text: "",
-        },
-      ],
-    },
-    {
-      slug: "factor-finder",
-      name: "Factor Finder",
-      instructions: [{ text: factorFinderText }],
-    },
-  ])
-  .returning();
+export async function run() {
+  console.log("Seeding database...");
 
-const moduleToFileInserts = await Promise.all(
-  modulesInsert.map(async (mod) => {
-    if (mod.slug === "default") {
-      const file1 = await db
-        .insert(starterFiles)
-        .values({
-          name: "main.py",
-          content: "",
-        })
-        .returning()
-        .then((r) => r[0]);
-      await db.insert(moduleToFile).values([
-        {
-          moduleId: mod.id,
-          fileId: file1.id,
-          sortOrder: 0,
-          isEntryPoint: true,
-          isActive: true,
-        },
-      ]);
-    } else if (mod.slug === "factor-finder") {
-      const file = await db
-        .insert(starterFiles)
-        .values({
-          name: "factor-finder.py",
-          content: "",
-        })
-        .returning()
-        .then((r) => r[0]);
-      await db.insert(moduleToFile).values({
-        moduleId: mod.id,
-        fileId: file.id,
-        sortOrder: 0,
-        isEntryPoint: true,
-        isActive: true,
-      });
-    }
-  })
-);
+  // Insert modules but ignore if the slug already exists.
+  await db
+    .insert(modules)
+    .values([
+      {
+        slug: "default",
+        name: "Default",
+        instructions: [
+          {
+            text: "",
+          },
+        ],
+      },
+      {
+        slug: "factor-finder",
+        name: "Factor Finder",
+        instructions: [{ text: factorFinderText }],
+      },
+    ])
+    .onConflictDoNothing();
 
-console.log("Seeding completed.");
-Deno.exit();
+  // Now fetch the modules (whether newly created or pre-existing).
+  const modulesInsert = [
+    (
+      await db
+        .select()
+        .from(modules)
+        .where(eq(modules.slug, "default"))
+        .limit(1)
+    )[0],
+    (
+      await db
+        .select()
+        .from(modules)
+        .where(eq(modules.slug, "factor-finder"))
+        .limit(1)
+    )[0],
+  ];
+
+  await Promise.all(
+    modulesInsert.map(async (mod) => {
+      if (!mod) return;
+
+      if (mod.slug === "default") {
+        // Ensure a starter file exists with this name. Try to find first to avoid duplicates.
+        let file1 = (
+          await db
+            .select()
+            .from(starterFiles)
+            .where(eq(starterFiles.name, "main.py"))
+            .limit(1)
+        )[0];
+        if (!file1) {
+          file1 = await db
+            .insert(starterFiles)
+            .values({
+              name: "main.py",
+              content: "",
+            })
+            .returning()
+            .then((r) => r[0]);
+        }
+
+        // Link module to file, but ignore if the (moduleId,fileId) PK already exists.
+        await db
+          .insert(moduleToFile)
+          .values([
+            {
+              moduleId: mod.id,
+              fileId: file1.id,
+              sortOrder: 0,
+              isEntryPoint: true,
+              isActive: true,
+            },
+          ])
+          .onConflictDoNothing();
+      } else if (mod.slug === "factor-finder") {
+        let file = (
+          await db
+            .select()
+            .from(starterFiles)
+            .where(eq(starterFiles.name, "factor-finder.py"))
+            .limit(1)
+        )[0];
+        if (!file) {
+          file = await db
+            .insert(starterFiles)
+            .values({
+              name: "factor-finder.py",
+              content: "",
+            })
+            .returning()
+            .then((r) => r[0]);
+        }
+
+        await db
+          .insert(moduleToFile)
+          .values({
+            moduleId: mod.id,
+            fileId: file.id,
+            sortOrder: 0,
+            isEntryPoint: true,
+            isActive: true,
+          })
+          .onConflictDoNothing();
+      }
+    })
+  );
+
+  console.log("Seeding completed.");
+}
