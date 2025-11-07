@@ -173,11 +173,11 @@ export default function Main() {
       </Show>
       <Show when={!moduleData.loading && !moduleData.error && module()}>
         <Resizable class="">
-          <ResizablePanel initialSize={0.35} class="overflow-hidden">
+          <ResizablePanel initialSize={0.25} class="overflow-hidden">
             <Instructions module={module()} />
           </ResizablePanel>
           <ResizableHandle />
-          <ResizablePanel initialSize={0.65} class="overflow-hidden">
+          <ResizablePanel initialSize={0.75} class="overflow-hidden">
             <Resizable orientation="vertical">
               <ResizablePanel initialSize={0.5} class="overflow-hidden">
                 <div class="h-full flex flex-col">

@@ -1,7 +1,15 @@
 .markdown,
 .prose {
-  line-height: 1.6;
+  line-height: 1.4;
   color: var(--color-foreground, #111827);
+}
+
+/* Make rendered markdown slightly smaller than the default prose size.
+   We set paragraph and list text explicitly so this overrides generated
+   Tailwind Typography rules which may be loaded earlier. */
+.markdown p,
+.markdown li {
+  font-size: 0.875rem; /* 14px */
 }
 
 .markdown p,
