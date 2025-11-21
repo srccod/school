@@ -38,6 +38,17 @@ export const ChevronRightIcon = (props: IconProps) => {
   );
 };
 
+export const HamburgerMenuIcon = (props: IconProps) => {
+  return (
+    <Icon viewBox="0 0 24 24" {...props}>
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M4 6h16" />
+      <path d="M4 12h16" />
+      <path d="M4 18h16" />
+    </Icon>
+  );
+};
+
 export const RunIcon = (props: IconProps) => {
   return (
     <Icon viewBox="0 0 24 24" {...props}>

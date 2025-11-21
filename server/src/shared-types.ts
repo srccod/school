@@ -21,3 +21,4 @@ export type FileResponse = {
 };
 
 export type ModuleResponse = Module & { files: FileResponse[] };
+export type ModulesResponse = Pick<Module, "id" | "slug" | "name">[];

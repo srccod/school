@@ -26,6 +26,15 @@ async function fetchWithAuth(
   }
 }
 
+export async function getModules() {
+  const response = await fetchWithAuth(`/modules`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch modules");
+  }
+
+  return response.json();
+}
+
 export async function getModuleBySlug(slug: string): Promise<ModuleResponse> {
   const response = await fetchWithAuth(`/modules/${slug}`);
   if (!response.ok) {
