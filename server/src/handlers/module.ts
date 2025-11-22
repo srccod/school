@@ -26,6 +26,17 @@ app.use("*", async (c, next) => {
   return next();
 });
 
+app.get("/", async (c) => {
+  const modules = await db
+    .select({
+      id: schema.modules.id,
+      slug: schema.modules.slug,
+      name: schema.modules.name,
+    })
+    .from(schema.modules);
+  return c.json(modules);
+});
+
 app.get("/:slug", async (c) => {
   const slug = c.req.param("slug");
   const user = c.get("user");
